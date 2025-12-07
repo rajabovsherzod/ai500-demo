@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -28,7 +28,7 @@ interface DeviceCardProps {
     brightness?: number;
     speed?: number;
   };
-  type: string; // Device tipi majburiy
+  type: string; 
   aiMode: boolean;
   onToggle: () => void;
   onBrightnessChange?: (value: number) => void;
@@ -46,11 +46,49 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   const { t } = useTranslation();
   const Icon = iconMap[type] || WifiOff;
   
-  // Agar device ma'lumoti bo'lmasa, offline
+  // Offline yoki Disabled holatlari
   const isOffline = !device;
-  const isDisabled = aiMode || isOffline;
+  // Agar AI rejimida bo'lsa yoki Device yo'q bo'lsa - bloklaymiz
+  const isDisabled = isOffline || aiMode;
   
   const deviceName = t(deviceNameKeys[type] || "Unknown Device");
+
+  // --- LOCAL STATE ---
+  // Bular faqat UI silliq ishlashi uchun
+  const [isOn, setIsOn] = useState(device?.isOn || false);
+  const [brightness, setBrightness] = useState(device?.brightness || 0);
+  const [speed, setSpeed] = useState(device?.speed || 0);
+
+  // --- SYNC WITH SERVER ---
+  // Serverdan yangi ma'lumot kelsa, local stateni yangilaymiz.
+  // LEKIN: Slider surilayotganda sakrab ketmasligi uchun ehtiyot bo'lamiz.
+  useEffect(() => {
+    if (device) {
+      setIsOn(device.isOn);
+      if (device.brightness !== undefined) setBrightness(device.brightness);
+      if (device.speed !== undefined) setSpeed(device.speed);
+    }
+  }, [device?.isOn, device?.brightness, device?.speed]); // Faqat qiymatlar o'zgarganda
+
+  // --- HANDLERS ---
+
+  // 1. Switch bosilganda
+  const handleSwitch = (checked: boolean) => {
+    setIsOn(checked); // 1. Darhol vizual o'zgartiramiz
+    onToggle();       // 2. API ga so'rov yuboramiz
+  };
+
+  // 2. Slider surilayotganda (Faqat vizual)
+  const handleSliderMove = (val: number[], mode: 'brightness' | 'speed') => {
+    if (mode === 'brightness') setBrightness(val[0]);
+    if (mode === 'speed') setSpeed(val[0]);
+  };
+
+  // 3. Slider qo'yib yuborilganda (API call)
+  const handleSliderCommit = (val: number[], mode: 'brightness' | 'speed') => {
+    if (mode === 'brightness' && onBrightnessChange) onBrightnessChange(val[0]);
+    if (mode === 'speed' && onSpeedChange) onSpeedChange(val[0]);
+  };
 
   return (
     <motion.div
@@ -60,48 +98,33 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     >
       <Card
         variant="device"
-        className={`relative ${isDisabled ? "opacity-60" : ""} ${
-          device?.isOn ? "border-primary/60" : ""
-        }`}
+        className={`relative transition-all duration-300 
+          ${isDisabled ? "opacity-70 grayscale-[0.3]" : ""} 
+          ${isOn ? "border-primary/60 ring-1 ring-primary/20" : ""}`
+        }
       >
         {/* Status Indicator */}
         <div
-          className={`absolute top-4 right-4 w-3 h-3 rounded-full ${
+          className={`absolute top-4 right-4 w-3 h-3 rounded-full transition-all duration-300 ${
             isOffline
-              ? "bg-red-500/50" // Offline bo'lsa qizil
-              : device?.isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
+              ? "bg-red-500/50" 
+              : isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
           }`}
-          style={
-            device?.isOn && !isOffline
-              ? { boxShadow: "0 0 10px hsl(var(--neon-green))" }
-              : undefined
-          }
+          style={isOn && !isOffline ? { boxShadow: "0 0 10px hsl(var(--neon-green))" } : undefined}
         />
         
-        {/* Offline Icon */}
-        {isOffline && (
-           <WifiOff className="absolute top-4 right-8 w-3 h-3 text-muted-foreground" />
-        )}
+        {isOffline && <WifiOff className="absolute top-4 right-8 w-3 h-3 text-muted-foreground" />}
 
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                device?.isOn
-                  ? "bg-primary/20 border border-primary/40"
+                isOn
+                  ? "bg-primary/20 border border-primary/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                   : "bg-muted border border-muted"
               }`}
-              style={
-                device?.isOn
-                  ? { boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" }
-                  : undefined
-              }
             >
-              <Icon
-                className={`w-6 h-6 transition-colors ${
-                  device?.isOn ? "text-primary" : "text-muted-foreground"
-                }`}
-              />
+              <Icon className={`w-6 h-6 transition-colors duration-300 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
             </div>
             <div>
               <CardTitle className="text-base">{deviceName}</CardTitle>
@@ -118,63 +141,65 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           {/* Power Toggle */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("devices.power")}</span>
+            
+            {/* SWITCH: Local State (isOn) ga bog'langan */}
             <Switch
-              checked={device?.isOn || false}
-              onCheckedChange={onToggle}
+              checked={isOn} 
+              onCheckedChange={handleSwitch}
               disabled={isDisabled}
-              className="data-[state=checked]:bg-primary"
+              className="data-[state=checked]:bg-primary transition-colors"
             />
           </div>
 
-          {/* Brightness Slider for LED */}
+          {/* Brightness Slider */}
           {type === "led" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>{t("devices.brightness")}</span>
-                <span className="text-primary">{device?.brightness || 0}%</span>
+                <span className="text-primary font-mono">{brightness}%</span>
               </div>
               <Slider
-                value={[device?.brightness || 0]}
-                onValueChange={(value) => onBrightnessChange?.(value[0])}
+                value={[brightness]} // Local state
+                onValueChange={(val) => handleSliderMove(val, 'brightness')} // Silliq yurish
+                onValueCommit={(val) => handleSliderCommit(val, 'brightness')} // API call
                 max={100}
                 step={1}
-                disabled={isDisabled || !device?.isOn || isOffline}
-                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                disabled={isDisabled || !isOn} // Agar o'chiq bo'lsa disable
+                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
               />
             </div>
           )}
 
-          {/* Speed Slider for Fan */}
+          {/* Speed Slider */}
           {type === "fan" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>{t("devices.fanSpeed")}</span>
-                <span className="text-primary">{device?.speed || 0}%</span>
+                <span className="text-primary font-mono">{speed}%</span>
               </div>
               <Slider
-                value={[device?.speed || 0]}
-                onValueChange={(value) => onSpeedChange?.(value[0])}
+                value={[speed]} // Local state
+                onValueChange={(val) => handleSliderMove(val, 'speed')} // Silliq yurish
+                onValueCommit={(val) => handleSliderCommit(val, 'speed')} // API call
                 max={100}
                 step={1}
-                disabled={isDisabled || !device?.isOn || isOffline}
-                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                disabled={isDisabled || !isOn} // Agar o'chiq bo'lsa disable
+                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
               />
             </div>
           )}
 
           {/* Status Badge */}
           <div
-            className={`text-center py-2 rounded-lg text-sm font-medium ${
+            className={`text-center py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
               isOffline
                 ? "bg-muted text-muted-foreground"
-                : device?.isOn
+                : isOn
                 ? "bg-neon-green/10 text-neon-green border border-neon-green/30"
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {isOffline 
-              ? "Not Connected" 
-              : device?.isOn ? t("devices.active") : t("devices.inactive")}
+            {isOffline ? "Not Connected" : isOn ? t("devices.active") : t("devices.inactive")}
           </div>
         </CardContent>
       </Card>

@@ -9,8 +9,6 @@ export const useGreenhouses = () => {
   return useQuery({
     queryKey: ["greenhouses"], // Kesh kaliti
     queryFn: getGreenhouses,
-    refetchInterval: 5000, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
-    refetchIntervalInBackground: true,
   });
 };
 
@@ -39,9 +37,9 @@ export const useGreenhouseById = (id: string | undefined) => {
     queryKey: ["greenhouse", id],
     queryFn: () => getGreenhouseById(Number(id)),
     enabled: !!id, // ID bo'lmasa so'rov yubormaydi
-    refetchInterval: 5000, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
-    refetchIntervalInBackground: true,
-    retry: 1,
+    // refetchInterval: 5000, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
+    // refetchIntervalInBackground: true,
+    // retry: 1,
   });
 };
 
@@ -110,15 +108,19 @@ export const useDeviceSwitch = () => {
     }) => switchDevice(greenhouseId, deviceName, state),
 
     onSuccess: (_, variables) => {
-      // Muvaffaqiyatli bo'lsa, ma'lumotlarni yangilaymiz
+      // Keshni yangilaymiz
       queryClient.invalidateQueries({ queryKey: ["greenhouse", String(variables.greenhouseId)] });
       
-      const status = variables.state ? "yoqildi" : "o'chirildi";
-      toast.success(`Qurilma muvaffaqiyatli ${status}!`);
+      // --- TUZATILDI: Statega qarab xabar chiqadi ---
+      if (variables.state === true) {
+        toast.success("Muvaffaqiyatli yoqildi! 🟢");
+      } else {
+        toast.success("Muvaffaqiyatli o'chirildi! 🔴");
+      }
     },
     onError: (error: any) => {
       console.error("Switch Error:", error);
-      toast.error("Qurilmani boshqarishda xatolik yuz berdi");
+      toast.error("Xatolik yuz berdi. Internetni tekshiring.");
     }
   });
 };
