@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const HeroSection: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Animated Background */}
@@ -47,7 +50,7 @@ const HeroSection: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-8"
           >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">AI-Powered Automation</span>
+            <span className="text-sm font-medium text-primary">{t("landing.badge")}</span>
           </motion.div>
 
           {/* Title */}
@@ -61,7 +64,7 @@ const HeroSection: React.FC = () => {
             <span className="text-gradient">Ai</span>
             <br />
             <span className="text-3xl md:text-5xl text-muted-foreground font-normal">
-              Intelligent Greenhouse Automation
+              {t("landing.subtitle")}
             </span>
           </motion.h1>
 
@@ -72,8 +75,8 @@ const HeroSection: React.FC = () => {
             transition={{ delay: 0.4 }}
             className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            Real-time monitoring. Autonomous control.{" "}
-            <span className="text-primary">Smart agriculture made simple.</span>
+            {t("landing.description")}{" "}
+            <span className="text-primary">{t("landing.highlight")}</span>
           </motion.p>
 
           {/* CTA Buttons */}
@@ -85,13 +88,13 @@ const HeroSection: React.FC = () => {
           >
             <Link to="/register">
               <Button variant="hero" size="xl" className="group">
-                Get Started
+                {t("nav.getStarted")}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link to="/login">
               <Button variant="outline" size="xl">
-                Login
+                {t("nav.login")}
               </Button>
             </Link>
           </motion.div>

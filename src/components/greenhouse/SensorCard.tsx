@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SensorData } from "@/contexts/GreenhouseContext";
 import { Droplets, Thermometer, Wind, Cloud, Sun, LineChart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const iconMap = {
   soil_moisture: Droplets,
@@ -20,6 +21,14 @@ const statusColors = {
   critical: "neon-coral",
 };
 
+const sensorNameKeys: Record<string, string> = {
+  soil_moisture: "sensors.soilMoisture",
+  humidity: "sensors.airHumidity",
+  temperature: "sensors.temperature",
+  co2: "sensors.co2Level",
+  light: "sensors.lightIntensity",
+};
+
 interface SensorCardProps {
   sensor: SensorData;
   greenhouseId: string;
@@ -27,8 +36,10 @@ interface SensorCardProps {
 
 const SensorCard: React.FC<SensorCardProps> = ({ sensor, greenhouseId }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const Icon = iconMap[sensor.type];
   const statusColor = statusColors[sensor.status];
+  const sensorName = t(sensorNameKeys[sensor.type]);
 
   return (
     <motion.div
@@ -59,7 +70,7 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, greenhouseId }) => {
             >
               <Icon className="w-5 h-5" style={{ color: `hsl(var(--${statusColor}))` }} />
             </div>
-            <CardTitle className="text-base">{sensor.name}</CardTitle>
+            <CardTitle className="text-base">{sensorName}</CardTitle>
           </div>
         </CardHeader>
 
@@ -85,8 +96,8 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, greenhouseId }) => {
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Min: {sensor.min}</span>
-                <span>Max: {sensor.max}</span>
+                <span>{t("sensors.min")}: {sensor.min}</span>
+                <span>{t("sensors.max")}: {sensor.max}</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -113,7 +124,7 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, greenhouseId }) => {
                   border: `1px solid hsl(var(--${statusColor}) / 0.4)`,
                 }}
               >
-                {sensor.status}
+                {t(`sensors.${sensor.status}`)}
               </span>
               <Button
                 variant="ghost"
@@ -122,7 +133,7 @@ const SensorCard: React.FC<SensorCardProps> = ({ sensor, greenhouseId }) => {
                 className="text-muted-foreground hover:text-primary"
               >
                 <LineChart className="w-4 h-4 mr-1" />
-                Chart
+                {t("sensors.chart")}
               </Button>
             </div>
           </div>

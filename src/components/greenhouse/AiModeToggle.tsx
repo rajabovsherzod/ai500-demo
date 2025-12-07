@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Brain, Hand } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface AiModeToggleProps {
   aiMode: boolean;
@@ -10,6 +11,8 @@ interface AiModeToggleProps {
 }
 
 const AiModeToggle: React.FC<AiModeToggleProps> = ({ aiMode, onToggle }) => {
+  const { t } = useTranslation();
+
   return (
     <Card variant="glow" className="p-4">
       <div className="flex items-center justify-between">
@@ -40,19 +43,17 @@ const AiModeToggle: React.FC<AiModeToggleProps> = ({ aiMode, onToggle }) => {
 
           <div>
             <h3 className="font-display text-lg font-semibold">
-              {aiMode ? "AI Mode" : "Manual Mode"}
+              {aiMode ? t("aiMode.aiMode") : t("aiMode.manualMode")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {aiMode
-                ? "AgroAi automatically manages all devices"
-                : "You have full control over all devices"}
+              {aiMode ? t("aiMode.aiDescription") : t("aiMode.manualDescription")}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <span className={`text-sm ${!aiMode ? "text-primary" : "text-muted-foreground"}`}>
-            Manual
+            {t("aiMode.manual")}
           </span>
           <Switch
             checked={aiMode}
@@ -60,7 +61,7 @@ const AiModeToggle: React.FC<AiModeToggleProps> = ({ aiMode, onToggle }) => {
             className="data-[state=checked]:bg-primary scale-125"
           />
           <span className={`text-sm ${aiMode ? "text-primary glow-text" : "text-muted-foreground"}`}>
-            AI
+            {t("aiMode.ai")}
           </span>
         </div>
       </div>
@@ -79,7 +80,7 @@ const AiModeToggle: React.FC<AiModeToggleProps> = ({ aiMode, onToggle }) => {
             >
               <Brain className="w-4 h-4" />
             </motion.div>
-            <span>AI is actively optimizing your greenhouse environment...</span>
+            <span>{t("aiMode.optimizing")}</span>
           </div>
         </motion.div>
       )}

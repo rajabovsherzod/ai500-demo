@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Leaf, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const RegisterPage: React.FC = () => {
   const [firstName, setFirstName] = useState("");
@@ -18,12 +20,13 @@ const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("auth.passwordMismatch"));
       return;
     }
 
@@ -31,10 +34,10 @@ const RegisterPage: React.FC = () => {
 
     try {
       await register(email, password, firstName, lastName);
-      toast.success("Welcome to AgroAi! Your account has been created.");
+      toast.success(t("auth.registerSuccess"));
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
+      toast.error(t("auth.registerError"));
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +45,11 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background geometric-bg flex items-center justify-center p-4">
+      {/* Language Switcher */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Gradient Orbs */}
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
@@ -76,14 +84,14 @@ const RegisterPage: React.FC = () => {
 
         <Card variant="glass">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>Start automating your greenhouse today</CardDescription>
+            <CardTitle className="text-2xl">{t("auth.createAccount")}</CardTitle>
+            <CardDescription>{t("auth.startAutomating")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t("auth.firstName")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -97,7 +105,7 @@ const RegisterPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t("auth.lastName")}</Label>
                   <Input
                     id="lastName"
                     placeholder="Farmer"
@@ -109,7 +117,7 @@ const RegisterPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -125,7 +133,7 @@ const RegisterPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -141,7 +149,7 @@ const RegisterPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -171,7 +179,7 @@ const RegisterPage: React.FC = () => {
                   />
                 ) : (
                   <>
-                    Create Account
+                    {t("auth.createAccount")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
@@ -179,9 +187,9 @@ const RegisterPage: React.FC = () => {
             </form>
 
             <div className="mt-6 text-center">
-              <span className="text-muted-foreground">Already have an account? </span>
+              <span className="text-muted-foreground">{t("auth.hasAccount")} </span>
               <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
+                {t("auth.signIn")}
               </Link>
             </div>
           </CardContent>

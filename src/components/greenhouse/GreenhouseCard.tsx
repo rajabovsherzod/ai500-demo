@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Greenhouse } from "@/contexts/GreenhouseContext";
 import { Leaf, Settings, ArrowRight, Thermometer, Droplets, Wind } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const statusColors = {
   ok: "neon-green",
@@ -18,11 +19,25 @@ interface GreenhouseCardProps {
 
 const GreenhouseCard: React.FC<GreenhouseCardProps> = ({ greenhouse }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const statusColor = statusColors[greenhouse.status];
 
   const tempSensor = greenhouse.sensors.find((s) => s.type === "temperature");
   const humiditySensor = greenhouse.sensors.find((s) => s.type === "humidity");
   const moistureSensor = greenhouse.sensors.find((s) => s.type === "soil_moisture");
+
+  const getStatusLabel = () => {
+    switch (greenhouse.status) {
+      case "ok":
+        return t("greenhouse.healthy");
+      case "warning":
+        return t("greenhouse.warning");
+      case "critical":
+        return t("greenhouse.critical");
+      default:
+        return greenhouse.status;
+    }
+  };
 
   return (
     <motion.div
@@ -51,7 +66,7 @@ const GreenhouseCard: React.FC<GreenhouseCardProps> = ({ greenhouse }) => {
                   className="text-xs font-medium uppercase tracking-wider"
                   style={{ color: `hsl(var(--${statusColor}))` }}
                 >
-                  {greenhouse.status === "ok" ? "Healthy" : greenhouse.status}
+                  {getStatusLabel()}
                 </span>
               </div>
             </div>
@@ -98,7 +113,9 @@ const GreenhouseCard: React.FC<GreenhouseCardProps> = ({ greenhouse }) => {
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {greenhouse.aiMode ? "🤖 AI Mode Active" : "🖐️ Manual Control"}
+            {greenhouse.aiMode
+              ? `🤖 ${t("greenhouse.aiModeActive")}`
+              : `🖐️ ${t("greenhouse.manualControl")}`}
           </div>
 
           {/* Actions */}
@@ -108,7 +125,7 @@ const GreenhouseCard: React.FC<GreenhouseCardProps> = ({ greenhouse }) => {
               className="flex-1"
               onClick={() => navigate(`/greenhouse/${greenhouse.id}`)}
             >
-              Open
+              {t("greenhouse.open")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button

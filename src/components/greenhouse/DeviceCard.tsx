@@ -5,12 +5,20 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { DeviceData } from "@/contexts/GreenhouseContext";
 import { Droplets, Wind, Lightbulb, Fan } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const iconMap = {
   water_pump: Droplets,
   humidifier: Wind,
   led: Lightbulb,
   fan: Fan,
+};
+
+const deviceNameKeys: Record<string, string> = {
+  water_pump: "devices.soilWaterPump",
+  humidifier: "devices.airHumidifier",
+  led: "devices.ledGrowLight",
+  fan: "devices.ventilationFan",
 };
 
 interface DeviceCardProps {
@@ -28,8 +36,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   onBrightnessChange,
   onSpeedChange,
 }) => {
+  const { t } = useTranslation();
   const Icon = iconMap[device.type];
   const isDisabled = aiMode;
+  const deviceName = t(deviceNameKeys[device.type]);
 
   return (
     <motion.div
@@ -76,9 +86,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               />
             </div>
             <div>
-              <CardTitle className="text-base">{device.name}</CardTitle>
+              <CardTitle className="text-base">{deviceName}</CardTitle>
               <span className="text-xs text-muted-foreground">
-                {aiMode ? "AI Controlled" : "Manual Mode"}
+                {aiMode ? t("devices.aiControlled") : t("devices.manualMode")}
               </span>
             </div>
           </div>
@@ -87,7 +97,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         <CardContent className="space-y-4">
           {/* Power Toggle */}
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Power</span>
+            <span className="text-sm font-medium">{t("devices.power")}</span>
             <Switch
               checked={device.isOn}
               onCheckedChange={onToggle}
@@ -100,7 +110,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           {device.type === "led" && device.brightness !== undefined && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span>Brightness</span>
+                <span>{t("devices.brightness")}</span>
                 <span className="text-primary">{device.brightness}%</span>
               </div>
               <Slider
@@ -118,7 +128,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           {device.type === "fan" && device.speed !== undefined && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span>Fan Speed</span>
+                <span>{t("devices.fanSpeed")}</span>
                 <span className="text-primary">{device.speed}%</span>
               </div>
               <Slider
@@ -140,7 +150,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {device.isOn ? "Active" : "Inactive"}
+            {device.isOn ? t("devices.active") : t("devices.inactive")}
           </div>
         </CardContent>
       </Card>

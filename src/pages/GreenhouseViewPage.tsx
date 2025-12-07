@@ -8,11 +8,13 @@ import SensorCard from "@/components/greenhouse/SensorCard";
 import DeviceCard from "@/components/greenhouse/DeviceCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Settings, LineChart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const GreenhouseViewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { greenhouses, toggleAiMode, toggleDevice, setDeviceBrightness, setDeviceSpeed } =
     useGreenhouse();
+  const { t } = useTranslation();
 
   const greenhouse = greenhouses.find((g) => g.id === id);
 
@@ -20,9 +22,9 @@ const GreenhouseViewPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-display text-2xl font-bold mb-4">Greenhouse not found</h1>
+          <h1 className="font-display text-2xl font-bold mb-4">{t("greenhouse.notFound")}</h1>
           <Link to="/dashboard">
-            <Button variant="neon">Back to Dashboard</Button>
+            <Button variant="neon">{t("greenhouse.backToDashboard")}</Button>
           </Link>
         </div>
       </div>
@@ -47,7 +49,7 @@ const GreenhouseViewPage: React.FC = () => {
                   <span className="text-foreground">{greenhouse.name}</span>
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Real-time monitoring and control
+                  {t("greenhouse.realTimeMonitoring")}
                 </p>
               </div>
             </div>
@@ -55,13 +57,13 @@ const GreenhouseViewPage: React.FC = () => {
               <Link to={`/greenhouse/${id}/analytics`}>
                 <Button variant="outline">
                   <LineChart className="w-4 h-4 mr-2" />
-                  Analytics
+                  {t("greenhouse.analytics")}
                 </Button>
               </Link>
               <Link to={`/greenhouse/${id}/settings`}>
                 <Button variant="outline">
                   <Settings className="w-4 h-4 mr-2" />
-                  Settings
+                  {t("greenhouse.settings")}
                 </Button>
               </Link>
             </div>
@@ -89,9 +91,9 @@ const GreenhouseViewPage: React.FC = () => {
           >
             <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-glow-pulse" />
-              Sensors
+              {t("greenhouse.sensors")}
               <span className="text-xs text-muted-foreground font-normal ml-2">
-                Live data
+                {t("greenhouse.liveData")}
               </span>
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -116,10 +118,10 @@ const GreenhouseViewPage: React.FC = () => {
           >
             <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-neon-green" />
-              Devices
+              {t("greenhouse.devices")}
               {greenhouse.aiMode && (
                 <span className="text-xs text-primary font-normal ml-2 px-2 py-1 rounded-full bg-primary/10 border border-primary/30">
-                  AI Controlled
+                  {t("greenhouse.aiControlled")}
                 </span>
               )}
             </h2>
