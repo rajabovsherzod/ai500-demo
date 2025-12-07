@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-// import { DeviceData } from "@/types/greenhouse"; 
 import { Droplets, Wind, Lightbulb, Fan, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -68,9 +67,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         {/* Status Indicator */}
         <div
           className={`absolute top-4 right-4 w-3 h-3 rounded-full ${
-             isOffline 
-             ? "bg-red-500/50" // Offline bo'lsa qizil
-             : device?.isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
+            isOffline
+              ? "bg-red-500/50" // Offline bo'lsa qizil
+              : device?.isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
           }`}
           style={
             device?.isOn && !isOffline
@@ -139,7 +138,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onValueChange={(value) => onBrightnessChange?.(value[0])}
                 max={100}
                 step={1}
-                disabled={isDisabled || !device?.isOn}
+                disabled={isDisabled || !device?.isOn || isOffline}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
               />
             </div>
@@ -157,7 +156,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onValueChange={(value) => onSpeedChange?.(value[0])}
                 max={100}
                 step={1}
-                disabled={isDisabled || !device?.isOn}
+                disabled={isDisabled || !device?.isOn || isOffline}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
               />
             </div>

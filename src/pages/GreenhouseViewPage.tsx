@@ -23,10 +23,10 @@ const EXPECTED_DEVICES = ["fan", "led", "water_pump", "humidifier"];
 
 // --- MUHIM: UI nomlarini API nomlariga o'girish ---
 const UI_TO_API_MAP: Record<string, string> = {
-  fan: "air",          // Ventilyator -> air
-  led: "led",          // Chiroq -> led
-  water_pump: "moisture", // Nasos -> moisture (suv bilan bog'liq bo'lgani uchun)
-  humidifier: "humidity"  // Namlagich -> humidity
+  fan: "air",          // Swaggerda: air
+  led: "led",          // Swaggerda: led
+  water_pump: "moisture", // Swaggerda: moisture
+  humidifier: "humidity"  // Swaggerda: humidity
 };
 
 const parseStatValue = (value: string | undefined | null): number | undefined => {
@@ -165,17 +165,27 @@ const GreenhouseViewPage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {EXPECTED_DEVICES.map((type, index) => {
-                const deviceData = apiDevices.find((d: any) => d.type === type);
-                
-                // DIQQAT: Agar deviceData undefined bo'lsa (Offline), switch ishlamaydi (Disabled bo'ladi).
-                // Agar siz API ni test qilmoqchi bo'lsangiz, vaqtincha fake obyekt berib turishingiz mumkin.
-                // Masalan: device={deviceData || { id: type, type: type, isOn: false }}
+                // 1. Asl ma'lumotni qidiramiz
+                let deviceData = apiDevices.find((d: any) => d.type === type);
+
+                // --- MUHIM O'ZGARISH: MOCK DATA ---
+                // Agar API dan ma'lumot kelmasa, biz "Fake" qurilma yasab beramiz.
+                // Shunda karta bloklanmaydi va Switch tugmasini bosib API ni tekshira olamiz.
+                if (!deviceData) {
+                  deviceData = {
+                    id: type,       // id shartli ravishda type bilan bir xil
+                    type: type,
+                    isOn: false,    // Default holati: O'chiq
+                    brightness: 50, // LED uchun default
+                    speed: 50       // Fan uchun default
+                  };
+                }
                 
                 return (
                   <motion.div key={type} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + index * 0.05 }}>
                     <DeviceCard
                       type={type}
-                      device={deviceData} 
+                      device={deviceData} // Endi bu yerda hech qachon 'undefined' bo'lmaydi
                       aiMode={aiMode}
                       // Toggle bosilganda bizning funksiya ishlaydi
                       onToggle={() => handleDeviceToggle(type, deviceData?.isOn || false)}

@@ -35,8 +35,14 @@ export const switchDevice = async (
   state: boolean
 ): Promise<{ ok: boolean }> => {
   const stateStr = state ? "on" : "off";
-  const response = await apiClient.post(
-    `/greenhouses/${greenhouseId}/devices/${deviceName}/switch/${stateStr}`
-  );
+  
+  // O'ZGARISH: URL oxiriga slash "/" qo'shildi
+  const url = `/greenhouses/${greenhouseId}/devices/${deviceName}/switch/${stateStr}`;
+  
+  console.log("➡️ API Request URL:", url);
+
+  // Ikkinchi parametr bo'sh obyekt {} bo'lishi shart
+  const response = await apiClient.post(url, {});
+  
   return response.data;
 };

@@ -9,7 +9,8 @@ export const useGreenhouses = () => {
   return useQuery({
     queryKey: ["greenhouses"], // Kesh kaliti
     queryFn: getGreenhouses,
-    staleTime: 1000 * 60 * 5, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
+    refetchInterval: 5000, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -38,6 +39,8 @@ export const useGreenhouseById = (id: string | undefined) => {
     queryKey: ["greenhouse", id],
     queryFn: () => getGreenhouseById(Number(id)),
     enabled: !!id, // ID bo'lmasa so'rov yubormaydi
+    refetchInterval: 5000, // 5 daqiqa davomida ma'lumotni yangi deb hisoblaydi
+    refetchIntervalInBackground: true,
     retry: 1,
   });
 };
