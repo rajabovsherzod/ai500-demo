@@ -3,8 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+// DIQQAT: Contextdan emas, Hookdan import qilamiz
+import { useAuth } from "@/hooks/use-auth"; 
 import { GreenhouseProvider } from "@/contexts/GreenhouseContext";
+
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -17,18 +19,21 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected Route wrapper
+// --- PROTECTED ROUTE ---
+// Hook orqali LocalStorage ni tekshiradi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth(); // Hookdan foydalanamiz
   
   if (!isAuthenticated) {
+    // Token yo'q bo'lsa Loginga
     return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;
 };
 
-// Public Route wrapper (redirects to dashboard if logged in)
+// --- PUBLIC ROUTE ---
+// Agar token bor bo'lsa, Dashboardga o'tkazadi
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
   
@@ -42,70 +47,17 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <LandingPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <RegisterPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/greenhouse/:id"
-        element={
-          <ProtectedRoute>
-            <GreenhouseViewPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/greenhouse/:id/settings"
-        element={
-          <ProtectedRoute>
-            <GreenhouseSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/greenhouse/:id/analytics"
-        element={
-          <ProtectedRoute>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      
+      {/* Himoyalangan yo'llar */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/greenhouse/:id" element={<ProtectedRoute><GreenhouseViewPage /></ProtectedRoute>} />
+      <Route path="/greenhouse/:id/settings" element={<ProtectedRoute><GreenhouseSettingsPage /></ProtectedRoute>} />
+      <Route path="/greenhouse/:id/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -113,17 +65,16 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <GreenhouseProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </GreenhouseProvider>
-    </AuthProvider>
+    {/* AuthProvider olib tashlandi */}
+    <GreenhouseProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </GreenhouseProvider>
   </QueryClientProvider>
 );
 

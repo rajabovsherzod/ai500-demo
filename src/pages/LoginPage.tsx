@@ -1,57 +1,69 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react"; // useEffect qo'shildi
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Leaf, Mail, Lock, ArrowRight } from "lucide-react";
+import { Leaf, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
+// Zod sxemasi
+const loginSchema = z.object({
+  email: z.string().min(1, "Email kiritish shart").email("Email noto'g'ri formatda"),
+  password: z.string().min(1, "Parol kiritish shart"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  // isAuthenticated ni ham olamiz
+  const { login, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
+  // 1-MUHIM O'ZGARISH: Auth holati o'zgarganda avtomatik yo'naltirish
+  useEffect(() => {
+    if (isAuthenticated) {
+      // replace: true - orqaga qaytish tugmasini bosganda yana login sahifasiga tushmaslik uchun
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const onSubmit = async (data: LoginFormValues) => {
     try {
-      await login(email, password);
-      toast.success(t("auth.loginSuccess"));
-      navigate("/dashboard");
+      await login(data.email, data.password);
+      toast.success(t("auth.loginSuccess") || "Xush kelibsiz!");
+      // Bu yerda navigate shart emas, chunki yuqoridagi useEffect ishga tushadi
     } catch (error) {
-      toast.error(t("auth.loginError"));
-    } finally {
-      setIsLoading(false);
+      console.error("Login Error:", error);
+      toast.error((error as Error).message);
     }
   };
 
   return (
     <div className="min-h-screen bg-background geometric-bg flex items-center justify-center p-4">
-      {/* Language Switcher */}
       <div className="fixed top-4 right-4 z-50">
         <LanguageSwitcher />
       </div>
-
-      {/* Gradient Orbs */}
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 8, repeat: Infinity }}
-        className="fixed top-1/4 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none"
-      />
-      <motion.div
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.15, 0.3, 0.15] }}
-        transition={{ duration: 10, repeat: Infinity }}
-        className="fixed bottom-1/4 -right-32 w-96 h-96 bg-accent/20 rounded-full blur-3xl pointer-events-none"
-      />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -59,11 +71,9 @@ const LoginPage: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <motion.div
             whileHover={{ rotate: 360 }}
-            transition={{ duration: 0.5 }}
             className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/40"
           >
             <Leaf className="w-7 h-7 text-primary" />
@@ -73,70 +83,62 @@ const LoginPage: React.FC = () => {
           </span>
         </Link>
 
-        <Card variant="glass">
+        <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{t("auth.welcomeBack")}</CardTitle>
-            <CardDescription>{t("auth.signInTo")}</CardDescription>
+            <CardTitle className="text-2xl">{t("auth.welcomeBack") || "Kirish"}</CardTitle>
+            <CardDescription>{t("auth.signInTo") || "Hisobingizga kiring"}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              
               <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Label htmlFor="email">{t("auth.email") || "Email"}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="farmer@agroai.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
+                    placeholder="test1@example.com"
+                    className={errors.email ? "border-red-500 pl-10" : "pl-10"}
+                    disabled={loading}
+                    {...register("email")}
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">{t("auth.password")}</Label>
+                <Label htmlFor="password">{t("auth.password") || "Parol"}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    required
+                    className={errors.password ? "border-red-500 pl-10" : "pl-10"}
+                    disabled={loading}
+                    {...register("password")}
                   />
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
+                )}
               </div>
 
               <div className="flex items-center justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
-                  {t("auth.forgotPassword")}
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  {t("auth.forgotPassword") || "Parolni unutdingizmi?"}
                 </Link>
               </div>
 
-              <Button
-                type="submit"
-                variant="hero"
-                size="lg"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
-                  />
+              <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 ) : (
                   <>
-                    {t("auth.signIn")}
+                    {t("auth.signIn") || "Kirish"}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}

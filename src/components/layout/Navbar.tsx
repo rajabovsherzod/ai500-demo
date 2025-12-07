@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Leaf, User, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+// 1-MUHIM: Context emas, Hookni ulaymiz
+import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Navbar: React.FC = () => {
+  // Hookdan kerakli funksiyalarni olamiz
   const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -17,13 +18,14 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    // Hook ichida window.location bo'lsa ham, bu yerda ham yo'naltiramiz
+    navigate("/login");
   };
 
   const navLinks = isAuthenticated
     ? [
-        { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
-        { to: "/profile", label: t("nav.profile"), icon: User },
+        { to: "/dashboard", label: t("nav.dashboard") || "Dashboard", icon: LayoutDashboard },
+        { to: "/profile", label: t("nav.profile") || "Profil", icon: User },
       ]
     : [];
 
@@ -74,23 +76,26 @@ const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
-                  {t("nav.welcome")}, <span className="text-primary">{user?.firstName}</span>
+                  {t("nav.welcome") || "Xush kelibsiz"}, <span className="text-primary font-semibold">
+                    {/* 2-MUHIM: Backendan first_name keladi (snake_case) */}
+                    {user?.first_name || "Foydalanuvchi"}
+                  </span>
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:text-destructive hover:bg-destructive/10">
                   <LogOut className="w-4 h-4 mr-2" />
-                  {t("nav.logout")}
+                  {t("nav.logout") || "Chiqish"}
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <Link to="/login">
                   <Button variant="ghost" size="sm">
-                    {t("nav.login")}
+                    {t("nav.login") || "Kirish"}
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button variant="neon" size="sm">
-                    {t("nav.getStarted")}
+                    {t("nav.getStarted") || "Boshlash"}
                   </Button>
                 </Link>
               </div>
@@ -110,57 +115,60 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden py-4 border-t border-primary/20"
-          >
-            <div className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10"
-                >
-                  <link.icon className="w-5 h-5" />
-                  {link.label}
-                </Link>
-              ))}
-              {isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10"
-                >
-                  <LogOut className="w-5 h-5" />
-                  {t("nav.logout")}
-                </button>
-              ) : (
-                <>
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden overflow-hidden border-t border-primary/20 bg-background/95 backdrop-blur-xl"
+            >
+              <div className="flex flex-col gap-2 p-4">
+                {navLinks.map((link) => (
                   <Link
-                    to="/login"
+                    key={link.to}
+                    to={link.to}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10"
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
                   >
-                    {t("nav.login")}
+                    <link.icon className="w-5 h-5 text-primary" />
+                    {link.label}
                   </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground"
+                ))}
+                
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 w-full text-left transition-colors"
                   >
-                    {t("nav.getStarted")}
-                  </Link>
-                </>
-              )}
-            </div>
-          </motion.div>
-        )}
+                    <LogOut className="w-5 h-5" />
+                    {t("nav.logout") || "Chiqish"}
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10 border border-transparent hover:border-primary/20"
+                    >
+                      {t("nav.login") || "Kirish"}
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20"
+                    >
+                      {t("nav.getStarted") || "Boshlash"}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.nav>
   );

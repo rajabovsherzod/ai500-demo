@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { DeviceData } from "@/contexts/GreenhouseContext";
-import { Droplets, Wind, Lightbulb, Fan } from "lucide-react";
+// import { DeviceData } from "@/types/greenhouse"; 
+import { Droplets, Wind, Lightbulb, Fan, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const iconMap = {
+const iconMap: any = {
   water_pump: Droplets,
   humidifier: Wind,
   led: Lightbulb,
@@ -22,7 +22,14 @@ const deviceNameKeys: Record<string, string> = {
 };
 
 interface DeviceCardProps {
-  device: DeviceData;
+  device?: {
+    id: string;
+    type: string;
+    isOn: boolean;
+    brightness?: number;
+    speed?: number;
+  };
+  type: string; // Device tipi majburiy
   aiMode: boolean;
   onToggle: () => void;
   onBrightnessChange?: (value: number) => void;
@@ -31,15 +38,20 @@ interface DeviceCardProps {
 
 const DeviceCard: React.FC<DeviceCardProps> = ({
   device,
+  type,
   aiMode,
   onToggle,
   onBrightnessChange,
   onSpeedChange,
 }) => {
   const { t } = useTranslation();
-  const Icon = iconMap[device.type];
-  const isDisabled = aiMode;
-  const deviceName = t(deviceNameKeys[device.type]);
+  const Icon = iconMap[type] || WifiOff;
+  
+  // Agar device ma'lumoti bo'lmasa, offline
+  const isOffline = !device;
+  const isDisabled = aiMode || isOffline;
+  
+  const deviceName = t(deviceNameKeys[type] || "Unknown Device");
 
   return (
     <motion.div
@@ -50,45 +62,54 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
       <Card
         variant="device"
         className={`relative ${isDisabled ? "opacity-60" : ""} ${
-          device.isOn ? "border-primary/60" : ""
+          device?.isOn ? "border-primary/60" : ""
         }`}
       >
         {/* Status Indicator */}
         <div
           className={`absolute top-4 right-4 w-3 h-3 rounded-full ${
-            device.isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
+             isOffline 
+             ? "bg-red-500/50" // Offline bo'lsa qizil
+             : device?.isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
           }`}
           style={
-            device.isOn
+            device?.isOn && !isOffline
               ? { boxShadow: "0 0 10px hsl(var(--neon-green))" }
               : undefined
           }
         />
+        
+        {/* Offline Icon */}
+        {isOffline && (
+           <WifiOff className="absolute top-4 right-8 w-3 h-3 text-muted-foreground" />
+        )}
 
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                device.isOn
+                device?.isOn
                   ? "bg-primary/20 border border-primary/40"
                   : "bg-muted border border-muted"
               }`}
               style={
-                device.isOn
+                device?.isOn
                   ? { boxShadow: "0 0 20px hsl(var(--primary) / 0.3)" }
                   : undefined
               }
             >
               <Icon
                 className={`w-6 h-6 transition-colors ${
-                  device.isOn ? "text-primary" : "text-muted-foreground"
+                  device?.isOn ? "text-primary" : "text-muted-foreground"
                 }`}
               />
             </div>
             <div>
               <CardTitle className="text-base">{deviceName}</CardTitle>
               <span className="text-xs text-muted-foreground">
-                {aiMode ? t("devices.aiControlled") : t("devices.manualMode")}
+                {isOffline 
+                  ? "Offline" 
+                  : aiMode ? t("devices.aiControlled") : t("devices.manualMode")}
               </span>
             </div>
           </div>
@@ -99,7 +120,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("devices.power")}</span>
             <Switch
-              checked={device.isOn}
+              checked={device?.isOn || false}
               onCheckedChange={onToggle}
               disabled={isDisabled}
               className="data-[state=checked]:bg-primary"
@@ -107,36 +128,36 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           </div>
 
           {/* Brightness Slider for LED */}
-          {device.type === "led" && device.brightness !== undefined && (
+          {type === "led" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>{t("devices.brightness")}</span>
-                <span className="text-primary">{device.brightness}%</span>
+                <span className="text-primary">{device?.brightness || 0}%</span>
               </div>
               <Slider
-                value={[device.brightness]}
+                value={[device?.brightness || 0]}
                 onValueChange={(value) => onBrightnessChange?.(value[0])}
                 max={100}
                 step={1}
-                disabled={isDisabled || !device.isOn}
+                disabled={isDisabled || !device?.isOn}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
               />
             </div>
           )}
 
           {/* Speed Slider for Fan */}
-          {device.type === "fan" && device.speed !== undefined && (
+          {type === "fan" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>{t("devices.fanSpeed")}</span>
-                <span className="text-primary">{device.speed}%</span>
+                <span className="text-primary">{device?.speed || 0}%</span>
               </div>
               <Slider
-                value={[device.speed]}
+                value={[device?.speed || 0]}
                 onValueChange={(value) => onSpeedChange?.(value[0])}
                 max={100}
                 step={1}
-                disabled={isDisabled || !device.isOn}
+                disabled={isDisabled || !device?.isOn}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
               />
             </div>
@@ -145,12 +166,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           {/* Status Badge */}
           <div
             className={`text-center py-2 rounded-lg text-sm font-medium ${
-              device.isOn
+              isOffline
+                ? "bg-muted text-muted-foreground"
+                : device?.isOn
                 ? "bg-neon-green/10 text-neon-green border border-neon-green/30"
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {device.isOn ? t("devices.active") : t("devices.inactive")}
+            {isOffline 
+              ? "Not Connected" 
+              : device?.isOn ? t("devices.active") : t("devices.inactive")}
           </div>
         </CardContent>
       </Card>

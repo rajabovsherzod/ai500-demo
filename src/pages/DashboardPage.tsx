@@ -3,10 +3,9 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useGreenhouse } from "@/contexts/GreenhouseContext";
 import Navbar from "@/components/layout/Navbar";
 import GreenhouseCard from "@/components/greenhouse/GreenhouseCard";
-import { Plus, Leaf } from "lucide-react";
+import { Plus, Leaf, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
@@ -16,23 +15,32 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useGreenhouses, useCreateGreenhouse } from "@/hooks/use-greenhouse-query";
 
 const DashboardPage: React.FC = () => {
-  const { greenhouses, addGreenhouse } = useGreenhouse();
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newGreenhouseName, setNewGreenhouseName] = useState("");
-  const { t } = useTranslation();
+
+  const { data: apiGreenhouses = [], isLoading, isError } = useGreenhouses();
+  const { mutate: createGreenhouse, isPending: isCreating } = useCreateGreenhouse();
 
   const handleAddGreenhouse = () => {
     if (!newGreenhouseName.trim()) {
-      toast.error(t("dashboard.nameRequired"));
+      toast.error(t("dashboard.nameRequired") || "Nom kiritish majburiy!");
       return;
     }
 
-    addGreenhouse(newGreenhouseName);
-    toast.success(`${newGreenhouseName} ${t("dashboard.created")}`);
-    setNewGreenhouseName("");
-    setIsDialogOpen(false);
+    createGreenhouse(
+      { name: newGreenhouseName },
+      {
+        onSuccess: (newGreenhouse) => {
+          toast.success(`${newGreenhouse.name} ${t("dashboard.created") || "muvaffaqiyatli yaratildi!"}`);
+          setNewGreenhouseName("");
+          setIsDialogOpen(false);
+        },
+      }
+    );
   };
 
   return (
@@ -43,15 +51,14 @@ const DashboardPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
               <h1 className="font-display text-3xl font-bold mb-2">
-                <span className="text-foreground">{t("dashboard.title")}</span>{" "}
-                <span className="text-primary glow-text">{t("dashboard.titleHighlight")}</span>
+                <span className="text-foreground">{t("dashboard.title") || "Mening"}</span>{" "}
+                <span className="text-primary glow-text">{t("dashboard.titleHighlight") || "Issiqxonalarim"}</span>
               </h1>
               <p className="text-muted-foreground">
-                {t("dashboard.subtitle")}
+                {t("dashboard.subtitle") || "Issiqxonalaringizni boshqaring va kuzatib boring"}
               </p>
             </div>
             <Button
@@ -60,75 +67,106 @@ const DashboardPage: React.FC = () => {
               onClick={() => setIsDialogOpen(true)}
             >
               <Plus className="w-5 h-5 mr-2" />
-              {t("dashboard.addGreenhouse")}
+              {t("dashboard.addGreenhouse") || "Yangi qo'shish"}
             </Button>
           </div>
 
-          {/* Greenhouse Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {greenhouses.map((greenhouse, index) => (
+          {isLoading && (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          )}
+
+          {isError && (
+            <div className="text-center text-red-500 py-10 border border-red-500/20 rounded-lg bg-red-500/5">
+              <p>Server bilan bog'lanishda xatolik yuz berdi.</p>
+              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                Qayta yuklash
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !isError && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {apiGreenhouses.map((greenhouse, index) => (
+                <motion.div
+                  key={greenhouse.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {/* API ma'lumotlarini to'g'ridan-to'g'ri uzatamiz. 
+                      GreenhouseCard endi sensors bo'lmasa X chiqaradi. */}
+                  <GreenhouseCard greenhouse={greenhouse} />
+                </motion.div>
+              ))}
+
               <motion.div
-                key={greenhouse.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: apiGreenhouses.length * 0.1 }}
               >
-                <GreenhouseCard greenhouse={greenhouse} />
+                <Card
+                  variant="glow"
+                  className="h-full min-h-[280px] flex items-center justify-center cursor-pointer hover:border-primary/60 group"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <CardContent className="text-center">
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-primary/40 group-hover:border-primary/60"
+                    >
+                      <Plus className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <h3 className="font-display text-lg font-semibold text-muted-foreground group-hover:text-foreground">
+                      {t("dashboard.addNew") || "Yangi issiqxona"}
+                    </h3>
+                  </CardContent>
+                </Card>
               </motion.div>
-            ))}
-
-            {/* Add New Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: greenhouses.length * 0.1 }}
-            >
-              <Card
-                variant="glow"
-                className="h-full min-h-[280px] flex items-center justify-center cursor-pointer hover:border-primary/60 group"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                <CardContent className="text-center">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-primary/40 group-hover:border-primary/60"
-                  >
-                    <Plus className="w-8 h-8 text-primary" />
-                  </motion.div>
-                  <h3 className="font-display text-lg font-semibold text-muted-foreground group-hover:text-foreground">
-                    {t("dashboard.addNew")}
-                  </h3>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+            </div>
+          )}
         </motion.div>
 
-        {/* Add Greenhouse Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="bg-card/95 backdrop-blur-xl border-primary/30">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Leaf className="w-5 h-5 text-primary" />
-                {t("dashboard.newGreenhouse")}
+                {t("dashboard.newGreenhouse") || "Yangi Issiqxona"}
               </DialogTitle>
               <DialogDescription>
-                {t("dashboard.createDescription")}
+                {t("dashboard.createDescription") || "Yangi issiqxonangizga nom bering."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <Input
-                placeholder={t("dashboard.namePlaceholder")}
+                placeholder={t("dashboard.namePlaceholder") || "Masalan: Pomidor sektori"}
                 value={newGreenhouseName}
                 onChange={(e) => setNewGreenhouseName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddGreenhouse()}
+                disabled={isCreating}
               />
               <div className="flex gap-3 justify-end">
-                <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-                  {t("dashboard.cancel")}
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isCreating}
+                >
+                  {t("dashboard.cancel") || "Bekor qilish"}
                 </Button>
-                <Button variant="neon" onClick={handleAddGreenhouse}>
-                  {t("dashboard.create")}
+                <Button 
+                  variant="neon" 
+                  onClick={handleAddGreenhouse}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Yaratilmoqda...
+                    </>
+                  ) : (
+                    t("dashboard.create") || "Yaratish"
+                  )}
                 </Button>
               </div>
             </div>
