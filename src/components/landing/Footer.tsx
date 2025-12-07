@@ -1,7 +1,10 @@
 import React from "react";
 import { Leaf } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="py-12 border-t border-primary/20">
       <div className="container mx-auto px-4">
@@ -17,21 +20,21 @@ const Footer: React.FC = () => {
 
           <div className="flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">
-              Privacy
+              {t("footer.privacy")}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Terms
+              {t("footer.terms")}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Documentation
+              {t("footer.documentation")}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Support
+              {t("footer.support")}
             </a>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} AgroAi. All rights reserved.
+            © {new Date().getFullYear()} AgroAi. {t("footer.rights")}
           </p>
         </div>
       </div>

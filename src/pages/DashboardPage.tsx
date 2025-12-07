@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { useGreenhouse } from "@/contexts/GreenhouseContext";
 import Navbar from "@/components/layout/Navbar";
 import GreenhouseCard from "@/components/greenhouse/GreenhouseCard";
-import { Plus, Leaf, X } from "lucide-react";
+import { Plus, Leaf } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -20,15 +21,16 @@ const DashboardPage: React.FC = () => {
   const { greenhouses, addGreenhouse } = useGreenhouse();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newGreenhouseName, setNewGreenhouseName] = useState("");
+  const { t } = useTranslation();
 
   const handleAddGreenhouse = () => {
     if (!newGreenhouseName.trim()) {
-      toast.error("Please enter a greenhouse name");
+      toast.error(t("dashboard.nameRequired"));
       return;
     }
 
     addGreenhouse(newGreenhouseName);
-    toast.success(`${newGreenhouseName} has been created!`);
+    toast.success(`${newGreenhouseName} ${t("dashboard.created")}`);
     setNewGreenhouseName("");
     setIsDialogOpen(false);
   };
@@ -45,11 +47,11 @@ const DashboardPage: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
               <h1 className="font-display text-3xl font-bold mb-2">
-                <span className="text-foreground">Your</span>{" "}
-                <span className="text-primary glow-text">Greenhouses</span>
+                <span className="text-foreground">{t("dashboard.title")}</span>{" "}
+                <span className="text-primary glow-text">{t("dashboard.titleHighlight")}</span>
               </h1>
               <p className="text-muted-foreground">
-                Manage and monitor all your connected greenhouses
+                {t("dashboard.subtitle")}
               </p>
             </div>
             <Button
@@ -58,7 +60,7 @@ const DashboardPage: React.FC = () => {
               onClick={() => setIsDialogOpen(true)}
             >
               <Plus className="w-5 h-5 mr-2" />
-              Add Greenhouse
+              {t("dashboard.addGreenhouse")}
             </Button>
           </div>
 
@@ -94,7 +96,7 @@ const DashboardPage: React.FC = () => {
                     <Plus className="w-8 h-8 text-primary" />
                   </motion.div>
                   <h3 className="font-display text-lg font-semibold text-muted-foreground group-hover:text-foreground">
-                    Add New Greenhouse
+                    {t("dashboard.addNew")}
                   </h3>
                 </CardContent>
               </Card>
@@ -108,25 +110,25 @@ const DashboardPage: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Leaf className="w-5 h-5 text-primary" />
-                New Greenhouse
+                {t("dashboard.newGreenhouse")}
               </DialogTitle>
               <DialogDescription>
-                Create a new greenhouse to start monitoring
+                {t("dashboard.createDescription")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <Input
-                placeholder="Greenhouse name (e.g., Main Greenhouse)"
+                placeholder={t("dashboard.namePlaceholder")}
                 value={newGreenhouseName}
                 onChange={(e) => setNewGreenhouseName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddGreenhouse()}
               />
               <div className="flex gap-3 justify-end">
                 <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+                  {t("dashboard.cancel")}
                 </Button>
                 <Button variant="neon" onClick={handleAddGreenhouse}>
-                  Create Greenhouse
+                  {t("dashboard.create")}
                 </Button>
               </div>
             </div>

@@ -8,9 +8,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
 import { User, Mail, Lock, Save, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ProfilePage: React.FC = () => {
   const { user, updateProfile } = useAuth();
+  const { t } = useTranslation();
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -25,7 +27,7 @@ const ProfilePage: React.FC = () => {
 
     await new Promise((resolve) => setTimeout(resolve, 800));
     updateProfile(firstName, lastName);
-    toast.success("Profile updated successfully!");
+    toast.success(t("profile.profileUpdated"));
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -35,13 +37,13 @@ const ProfilePage: React.FC = () => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error(t("profile.newPasswordMismatch"));
       return;
     }
 
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
-    toast.success("Password changed successfully!");
+    toast.success(t("profile.passwordChanged"));
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -58,11 +60,11 @@ const ProfilePage: React.FC = () => {
           className="max-w-2xl mx-auto"
         >
           <h1 className="font-display text-3xl font-bold mb-2">
-            <span className="text-foreground">Profile</span>{" "}
-            <span className="text-primary glow-text">Settings</span>
+            <span className="text-foreground">{t("profile.title")}</span>{" "}
+            <span className="text-primary glow-text">{t("profile.settings")}</span>
           </h1>
           <p className="text-muted-foreground mb-8">
-            Manage your account information and security settings
+            {t("profile.subtitle")}
           </p>
 
           <div className="space-y-6">
@@ -71,14 +73,14 @@ const ProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5 text-primary" />
-                  Personal Information
+                  {t("profile.personalInfo")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">{t("auth.firstName")}</Label>
                       <Input
                         id="firstName"
                         value={firstName}
@@ -87,7 +89,7 @@ const ProfilePage: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">{t("auth.lastName")}</Label>
                       <Input
                         id="lastName"
                         value={lastName}
@@ -98,7 +100,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("auth.email")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                       <Input
@@ -110,7 +112,7 @@ const ProfilePage: React.FC = () => {
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Email cannot be changed
+                      {t("profile.emailCannotChange")}
                     </p>
                   </div>
 
@@ -124,12 +126,12 @@ const ProfilePage: React.FC = () => {
                     ) : saved ? (
                       <>
                         <Check className="w-4 h-4 mr-2" />
-                        Saved!
+                        {t("profile.saved")}
                       </>
                     ) : (
                       <>
                         <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                        {t("profile.saveChanges")}
                       </>
                     )}
                   </Button>
@@ -142,13 +144,13 @@ const ProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Lock className="w-5 h-5 text-primary" />
-                  Change Password
+                  {t("profile.changePassword")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Label htmlFor="currentPassword">{t("profile.currentPassword")}</Label>
                     <Input
                       id="currentPassword"
                       type="password"
@@ -160,7 +162,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
+                    <Label htmlFor="newPassword">{t("profile.newPassword")}</Label>
                     <Input
                       id="newPassword"
                       type="password"
@@ -172,7 +174,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                    <Label htmlFor="confirmNewPassword">{t("profile.confirmNewPassword")}</Label>
                     <Input
                       id="confirmNewPassword"
                       type="password"
@@ -184,7 +186,7 @@ const ProfilePage: React.FC = () => {
                   </div>
 
                   <Button type="submit" variant="outline" disabled={isSaving}>
-                    Update Password
+                    {t("profile.updatePassword")}
                   </Button>
                 </form>
               </CardContent>

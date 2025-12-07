@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Leaf, Mail, Lock, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +17,7 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +25,10 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(email, password);
-      toast.success("Welcome back to AgroAi!");
+      toast.success(t("auth.loginSuccess"));
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+      toast.error(t("auth.loginError"));
     } finally {
       setIsLoading(false);
     }
@@ -33,6 +36,11 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background geometric-bg flex items-center justify-center p-4">
+      {/* Language Switcher */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Gradient Orbs */}
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
@@ -67,13 +75,13 @@ const LoginPage: React.FC = () => {
 
         <Card variant="glass">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your AgroAi account</CardDescription>
+            <CardTitle className="text-2xl">{t("auth.welcomeBack")}</CardTitle>
+            <CardDescription>{t("auth.signInTo")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -89,7 +97,7 @@ const LoginPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
@@ -109,7 +117,7 @@ const LoginPage: React.FC = () => {
                   to="/forgot-password"
                   className="text-sm text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t("auth.forgotPassword")}
                 </Link>
               </div>
 
@@ -128,7 +136,7 @@ const LoginPage: React.FC = () => {
                   />
                 ) : (
                   <>
-                    Sign In
+                    {t("auth.signIn")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
@@ -136,9 +144,9 @@ const LoginPage: React.FC = () => {
             </form>
 
             <div className="mt-6 text-center">
-              <span className="text-muted-foreground">Don't have an account? </span>
+              <span className="text-muted-foreground">{t("auth.noAccount")} </span>
               <Link to="/register" className="text-primary hover:underline font-medium">
-                Sign up
+                {t("auth.signUp")}
               </Link>
             </div>
           </CardContent>

@@ -1,16 +1,19 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Leaf, User, LogOut, Settings, LayoutDashboard, Menu, X } from "lucide-react";
+import { Leaf, User, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -19,8 +22,8 @@ const Navbar: React.FC = () => {
 
   const navLinks = isAuthenticated
     ? [
-        { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { to: "/profile", label: "Profile", icon: User },
+        { to: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+        { to: "/profile", label: t("nav.profile"), icon: User },
       ]
     : [];
 
@@ -66,26 +69,28 @@ const Navbar: React.FC = () => {
               );
             })}
 
+            <LanguageSwitcher />
+
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
-                  Welcome, <span className="text-primary">{user?.firstName}</span>
+                  {t("nav.welcome")}, <span className="text-primary">{user?.firstName}</span>
                 </span>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {t("nav.logout")}
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <Link to="/login">
                   <Button variant="ghost" size="sm">
-                    Login
+                    {t("nav.login")}
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button variant="neon" size="sm">
-                    Get Started
+                    {t("nav.getStarted")}
                   </Button>
                 </Link>
               </div>
@@ -93,12 +98,15 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <LanguageSwitcher />
+            <button
+              className="p-2 text-foreground"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -130,7 +138,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="w-5 h-5" />
-                  Logout
+                  {t("nav.logout")}
                 </button>
               ) : (
                 <>
@@ -139,14 +147,14 @@ const Navbar: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10"
                   >
-                    Login
+                    {t("nav.login")}
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground"
                   >
-                    Get Started
+                    {t("nav.getStarted")}
                   </Link>
                 </>
               )}

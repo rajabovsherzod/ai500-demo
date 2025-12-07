@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useGreenhouse } from "@/contexts/GreenhouseContext";
 import Navbar from "@/components/layout/Navbar";
@@ -9,24 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Thermometer, Droplets, Wind, Cloud, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const GreenhouseSettingsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { greenhouses, updateGreenhouseSettings } = useGreenhouse();
-
+  const { t } = useTranslation();
   const greenhouse = greenhouses.find((g) => g.id === id);
 
   const [settings, setSettings] = useState(greenhouse?.settings || {
-    name: "",
-    tempMin: 18,
-    tempMax: 28,
-    humidityMin: 50,
-    humidityMax: 70,
-    soilMoistureMin: 40,
-    soilMoistureMax: 80,
-    co2Min: 300,
-    co2Max: 800,
+    name: "", tempMin: 18, tempMax: 28, humidityMin: 50, humidityMax: 70,
+    soilMoistureMin: 40, soilMoistureMax: 80, co2Min: 300, co2Max: 800,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,10 +28,8 @@ const GreenhouseSettingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-display text-2xl font-bold mb-4">Greenhouse not found</h1>
-          <Link to="/dashboard">
-            <Button variant="neon">Back to Dashboard</Button>
-          </Link>
+          <h1 className="font-display text-2xl font-bold mb-4">{t("greenhouse.notFound")}</h1>
+          <Link to="/dashboard"><Button variant="neon">{t("greenhouse.backToDashboard")}</Button></Link>
         </div>
       </div>
     );
@@ -48,193 +39,78 @@ const GreenhouseSettingsPage: React.FC = () => {
     setIsSaving(true);
     await new Promise((resolve) => setTimeout(resolve, 800));
     updateGreenhouseSettings(greenhouse.id, settings);
-    toast.success("Settings saved successfully!");
+    toast.success(t("settings.settingsSavedMsg"));
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const thresholdGroups = [
-    {
-      title: "Temperature",
-      icon: Thermometer,
-      color: "neon-coral",
-      minKey: "tempMin" as const,
-      maxKey: "tempMax" as const,
-      unit: "°C",
-    },
-    {
-      title: "Air Humidity",
-      icon: Cloud,
-      color: "neon-cyan",
-      minKey: "humidityMin" as const,
-      maxKey: "humidityMax" as const,
-      unit: "%",
-    },
-    {
-      title: "Soil Moisture",
-      icon: Droplets,
-      color: "neon-green",
-      minKey: "soilMoistureMin" as const,
-      maxKey: "soilMoistureMax" as const,
-      unit: "%",
-    },
-    {
-      title: "CO₂ Level",
-      icon: Wind,
-      color: "neon-amber",
-      minKey: "co2Min" as const,
-      maxKey: "co2Max" as const,
-      unit: "ppm",
-    },
+    { title: t("sensors.temperature"), icon: Thermometer, color: "neon-coral", minKey: "tempMin" as const, maxKey: "tempMax" as const, unit: "°C" },
+    { title: t("sensors.airHumidity"), icon: Cloud, color: "neon-cyan", minKey: "humidityMin" as const, maxKey: "humidityMax" as const, unit: "%" },
+    { title: t("sensors.soilMoisture"), icon: Droplets, color: "neon-green", minKey: "soilMoistureMin" as const, maxKey: "soilMoistureMax" as const, unit: "%" },
+    { title: t("sensors.co2Level"), icon: Wind, color: "neon-amber", minKey: "co2Min" as const, maxKey: "co2Max" as const, unit: "ppm" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 pt-24 pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-3xl mx-auto"
-        >
-          {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
-            <Link to={`/greenhouse/${id}`}>
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Link to={`/greenhouse/${id}`}><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
             <div>
               <h1 className="font-display text-2xl md:text-3xl font-bold">
-                <span className="text-foreground">Greenhouse</span>{" "}
-                <span className="text-primary glow-text">Settings</span>
+                <span className="text-foreground">{t("settings.title")}</span>{" "}
+                <span className="text-primary glow-text">{t("settings.titleHighlight")}</span>
               </h1>
-              <p className="text-muted-foreground text-sm">
-                Configure thresholds and automation parameters
-              </p>
+              <p className="text-muted-foreground text-sm">{t("settings.subtitle")}</p>
             </div>
           </div>
 
           <div className="space-y-6">
-            {/* General Settings */}
             <Card variant="glass">
-              <CardHeader>
-                <CardTitle>General</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>{t("settings.general")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Greenhouse Name</Label>
-                  <Input
-                    id="name"
-                    value={settings.name}
-                    onChange={(e) =>
-                      setSettings({ ...settings, name: e.target.value })
-                    }
-                    placeholder="Enter greenhouse name"
-                  />
+                  <Label htmlFor="name">{t("settings.greenhouseName")}</Label>
+                  <Input id="name" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Threshold Settings */}
             <Card variant="glass">
-              <CardHeader>
-                <CardTitle>Sensor Thresholds</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>{t("settings.sensorThresholds")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {thresholdGroups.map((group) => (
-                    <motion.div
-                      key={group.title}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-muted/30 border border-primary/10"
-                    >
+                    <div key={group.title} className="p-4 rounded-xl bg-muted/30 border border-primary/10">
                       <div className="flex items-center gap-2 mb-4">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
-                          style={{
-                            backgroundColor: `hsl(var(--${group.color}) / 0.2)`,
-                          }}
-                        >
-                          <group.icon
-                            className="w-4 h-4"
-                            style={{ color: `hsl(var(--${group.color}))` }}
-                          />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `hsl(var(--${group.color}) / 0.2)` }}>
+                          <group.icon className="w-4 h-4" style={{ color: `hsl(var(--${group.color}))` }} />
                         </div>
                         <span className="font-medium">{group.title}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            Min ({group.unit})
-                          </Label>
-                          <Input
-                            type="number"
-                            value={settings[group.minKey]}
-                            onChange={(e) =>
-                              setSettings({
-                                ...settings,
-                                [group.minKey]: Number(e.target.value),
-                              })
-                            }
-                          />
+                          <Label className="text-xs text-muted-foreground">{t("sensors.min")} ({group.unit})</Label>
+                          <Input type="number" value={settings[group.minKey]} onChange={(e) => setSettings({ ...settings, [group.minKey]: Number(e.target.value) })} />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">
-                            Max ({group.unit})
-                          </Label>
-                          <Input
-                            type="number"
-                            value={settings[group.maxKey]}
-                            onChange={(e) =>
-                              setSettings({
-                                ...settings,
-                                [group.maxKey]: Number(e.target.value),
-                              })
-                            }
-                          />
+                          <Label className="text-xs text-muted-foreground">{t("sensors.max")} ({group.unit})</Label>
+                          <Input type="number" value={settings[group.maxKey]} onChange={(e) => setSettings({ ...settings, [group.maxKey]: Number(e.target.value) })} />
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Save Button */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Button
-                variant="hero"
-                size="lg"
-                className="w-full"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
-                  />
-                ) : saved ? (
-                  <>
-                    <Check className="w-5 h-5 mr-2" />
-                    Settings Saved!
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5 mr-2" />
-                    Save Settings
-                  </>
-                )}
-              </Button>
-            </motion.div>
+            <Button variant="hero" size="lg" className="w-full" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                : saved ? <><Check className="w-5 h-5 mr-2" />{t("settings.settingsSaved")}</> : <><Save className="w-5 h-5 mr-2" />{t("settings.saveSettings")}</>}
+            </Button>
           </div>
         </motion.div>
       </main>
