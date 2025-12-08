@@ -1,57 +1,51 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-// DIQQAT: Contextdan emas, Hookdan import qilamiz
+// Navigate ni import qilish esdan chiqmasin
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; 
 import { useAuth } from "@/hooks/use-auth"; 
 import { GreenhouseProvider } from "@/contexts/GreenhouseContext";
 
-import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import ProfilePage from "./pages/ProfilePage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 import GreenhouseViewPage from "./pages/GreenhouseViewPage";
 import GreenhouseSettingsPage from "./pages/GreenhouseSettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
+// LandingPage endi kerak emas, chunki biz to'g'ridan-to'g'ri o'tib ketamiz
+
 const queryClient = new QueryClient();
 
 // --- PROTECTED ROUTE ---
-// Hook orqali LocalStorage ni tekshiradi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth(); // Hookdan foydalanamiz
-  
-  if (!isAuthenticated) {
-    // Token yo'q bo'lsa Loginga
-    return <Navigate to="/login" replace />;
-  }
-  
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
 // --- PUBLIC ROUTE ---
-// Agar token bor bo'lsa, Dashboardga o'tkazadi
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      {/* --- ASOSIY O'ZGARISH SHU YERDA --- */}
+      {/* Kim "/" ga kirsa, avtomatik "/dashboard" ga otib yuboradi */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       
-      {/* Himoyalangan yo'llar */}
+      {/* Dashboard himoyalangan, lekin bizda token borligi uchun kirib ketaveradi */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/greenhouse/:id" element={<ProtectedRoute><GreenhouseViewPage /></ProtectedRoute>} />
@@ -63,19 +57,42 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    {/* AuthProvider olib tashlandi */}
-    <GreenhouseProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </GreenhouseProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+
+  useEffect(() => {
+    // Tokenni tekshirish va o'rnatish logikasi (avvalgi koddan)
+    const currentToken = localStorage.getItem('agroai_token'); 
+    const universalToken = import.meta.env.VITE_UNIVERSAL_TOKEN;
+
+    if (!currentToken && universalToken) {
+      localStorage.setItem('agroai_token', universalToken);
+      
+      // Fake User
+      const fakeUser = {
+        id: "universal_guest",
+        email: "guest@agroai.uz",
+        full_name: "Mehmon Foydalanuvchi",
+        role: "user"
+      };
+      localStorage.setItem('agroai_user', JSON.stringify(fakeUser));
+      
+      window.location.reload(); 
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <GreenhouseProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </GreenhouseProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -12,6 +12,7 @@ export interface Greenhouse {
   created_at: string;
   stats?: any; 
   settings?: GreenhouseSettings; // Backenddan kelishi kerak
+  aiMode?: boolean
 }
 
 export interface CreateGreenhousePayload {
