@@ -10,17 +10,30 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Navbar: React.FC = () => {
   // Hookdan kerakli funksiyalarni olamiz
-  const { isAuthenticated, logout, user } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
+
+  // Userni to'g'ridan-to'g'ri localStorage'dan ham o'qiymiz
+  const storedUser = (() => {
+    try {
+      const raw = localStorage.getItem("agroai_user");
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  })();
 
   const handleLogout = () => {
     logout();
     // Hook ichida window.location bo'lsa ham, bu yerda ham yo'naltiramiz
     navigate("/login");
   };
+
+  console.log("Stored user:" , storedUser)
 
   const navLinks = isAuthenticated
     ? [
@@ -75,13 +88,18 @@ const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
-                  {t("nav.welcome") || "Xush kelibsiz"}, <span className="text-primary font-semibold">
-                    {/* 2-MUHIM: Backendan first_name keladi (snake_case) */}
-                    {user?.first_name || "Foydalanuvchi"}
-                  </span>
+                <span className="text-primary font-semibold">
+                  {storedUser?.first_name ||
+                    storedUser?.full_name ||
+                    storedUser?.email ||
+                    "Foydalanuvchi"}
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:text-destructive hover:bg-destructive/10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="hover:text-destructive hover:bg-destructive/10"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   {t("nav.logout") || "Chiqish"}
                 </Button>
@@ -135,7 +153,7 @@ const Navbar: React.FC = () => {
                     {link.label}
                   </Link>
                 ))}
-                
+
                 {isAuthenticated ? (
                   <button
                     onClick={() => {

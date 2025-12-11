@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { login as loginApi } from '../api/auth.api';
+import { useState, useCallback, useEffect } from 'react';
+import { login as loginApi, whoAmI } from '../api/auth.api';
 import { LoginPayload, LoginResponse, User, AuthState } from '../types/auth';
 import { AxiosError } from 'axios';
 
@@ -30,6 +30,25 @@ export const useAuth = () => {
     }
     return { user, token };
   });
+
+  useEffect(() => {
+    // Agar token bor-u, lekin user hali yo'q bo'lsa, whoAmI orqali olib kelamiz
+    if (authData.token && !authData.user) {
+      const fetchUser = async () => {
+        try {
+          const user = await whoAmI();
+          setAuthData({ user, token: authData.token });
+          localStorage.setItem("agroai_user", JSON.stringify(user));
+        } catch (error) {
+          localStorage.removeItem("agroai_token");
+          localStorage.removeItem("agroai_user");
+          setAuthData({ user: null, token: null });
+        }
+      };
+
+      void fetchUser();
+    }
+  }, [authData.token, authData.user]);
 
   // --- LOGIN ---
   const login = useCallback(async (email: string, password: string) => {

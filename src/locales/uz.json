@@ -109,7 +109,8 @@
     "liveData": "Jonli ma'lumotlar",
     "sensors": "Sensorlar",
     "devices": "Qurilmalar",
-    "aiControlled": "AI tomonidan boshqariladi"
+    "aiControlled": "AI tomonidan boshqariladi",
+    "plants": "O'simliklar"
   },
   "aiMode": {
     "ai": "AI",
@@ -145,6 +146,43 @@
     "inactive": "Nofaol",
     "aiControlled": "AI tomonidan boshqariladi",
     "manualMode": "Qo'lda rejim"
+  },
+  "plants": {
+    "title": "O'simliklar",
+    "add": "Qo'shish",
+    "addFirst": "Birinchi o'simlikni qo'shing",
+    "empty": "Hali o'simlik qo'shilmagan",
+    "loading": "O'simliklar yuklanmoqda...",
+    "newPlant": "Yangi o'simlik",
+    "editPlant": "O'simlikni tahrirlash",
+    "addDescription": "Issiqxonaga yangi o'simlik qo'shing",
+    "editDescription": "O'simlik ma'lumotlarini o'zgartiring",
+    "name": "Nomi",
+    "namePlaceholder": "Masalan: Mening pomidorim",
+    "type": "Turi",
+    "typePlaceholder": "Turni tanlang",
+    "variety": "Navi (ixtiyoriy)",
+    "varietyPlaceholder": "Masalan: Cherry, Beefsteak...",
+    "save": "Qo'shish",
+    "update": "Yangilash",
+    "saving": "Saqlanmoqda...",
+    "deleteConfirm": "ni o'chirishni xohlaysizmi?",
+    "created": "O'simlik muvaffaqiyatli qo'shildi!",
+    "updated": "O'simlik yangilandi!",
+    "deleted": "O'simlik o'chirildi!",
+    "validationError": "Nom va turni tanlang!",
+    "types": {
+      "tomato": "Pomidor",
+      "cucumber": "Bodring",
+      "pepper": "Qalampir",
+      "eggplant": "Baqlajon",
+      "lettuce": "Salat",
+      "carrot": "Sabzi",
+      "onion": "Piyoz",
+      "garlic": "Sarimsoq",
+      "potato": "Kartoshka",
+      "strawberry": "Qulupnay"
+    }
   },
   "settings": {
     "title": "Issiqxona",

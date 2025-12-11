@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -28,9 +28,9 @@ interface DeviceCardProps {
     brightness?: number;
     speed?: number;
   };
-  type: string; 
+  type: string;
   aiMode: boolean;
-  onToggle: () => void;
+  onToggle: (newState: boolean) => void; // O'ZGARISH: Yangi state qabul qiladi
   onBrightnessChange?: (value: number) => void;
   onSpeedChange?: (value: number) => void;
 }
@@ -45,12 +45,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 }) => {
   const { t } = useTranslation();
   const Icon = iconMap[type] || WifiOff;
-  
+
   // Offline yoki Disabled holatlari
   const isOffline = !device;
   // Agar AI rejimida bo'lsa yoki Device yo'q bo'lsa - bloklaymiz
   const isDisabled = isOffline || aiMode;
-  
+
   const deviceName = t(deviceNameKeys[type] || "Unknown Device");
 
   // --- LOCAL STATE ---
@@ -61,33 +61,32 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   // --- SYNC WITH SERVER ---
   // Serverdan yangi ma'lumot kelsa, local stateni yangilaymiz.
-  // LEKIN: Slider surilayotganda sakrab ketmasligi uchun ehtiyot bo'lamiz.
   useEffect(() => {
     if (device) {
       setIsOn(device.isOn);
       if (device.brightness !== undefined) setBrightness(device.brightness);
       if (device.speed !== undefined) setSpeed(device.speed);
     }
-  }, [device?.isOn, device?.brightness, device?.speed]); // Faqat qiymatlar o'zgarganda
+  }, [device?.isOn, device?.brightness, device?.speed]);
 
   // --- HANDLERS ---
 
   // 1. Switch bosilganda
   const handleSwitch = (checked: boolean) => {
-    setIsOn(checked); // 1. Darhol vizual o'zgartiramiz
-    onToggle();       // 2. API ga so'rov yuboramiz
+    setIsOn(checked);    // 1. Darhol vizual o'zgartiramiz
+    onToggle(checked);   // 2. O'ZGARISH: Yangi state ni API ga yuboramiz
   };
 
   // 2. Slider surilayotganda (Faqat vizual)
-  const handleSliderMove = (val: number[], mode: 'brightness' | 'speed') => {
-    if (mode === 'brightness') setBrightness(val[0]);
-    if (mode === 'speed') setSpeed(val[0]);
+  const handleSliderMove = (val: number[], mode: "brightness" | "speed") => {
+    if (mode === "brightness") setBrightness(val[0]);
+    if (mode === "speed") setSpeed(val[0]);
   };
 
   // 3. Slider qo'yib yuborilganda (API call)
-  const handleSliderCommit = (val: number[], mode: 'brightness' | 'speed') => {
-    if (mode === 'brightness' && onBrightnessChange) onBrightnessChange(val[0]);
-    if (mode === 'speed' && onSpeedChange) onSpeedChange(val[0]);
+  const handleSliderCommit = (val: number[], mode: "brightness" | "speed") => {
+    if (mode === "brightness" && onBrightnessChange) onBrightnessChange(val[0]);
+    if (mode === "speed" && onSpeedChange) onSpeedChange(val[0]);
   };
 
   return (
@@ -100,20 +99,27 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         variant="device"
         className={`relative transition-all duration-300 
           ${isDisabled ? "opacity-70 grayscale-[0.3]" : ""} 
-          ${isOn ? "border-primary/60 ring-1 ring-primary/20" : ""}`
-        }
+          ${isOn ? "border-primary/60 ring-1 ring-primary/20" : ""}`}
       >
         {/* Status Indicator */}
         <div
           className={`absolute top-4 right-4 w-3 h-3 rounded-full transition-all duration-300 ${
             isOffline
-              ? "bg-red-500/50" 
-              : isOn ? "bg-neon-green animate-glow-pulse" : "bg-muted"
+              ? "bg-red-500/50"
+              : isOn
+              ? "bg-neon-green animate-glow-pulse"
+              : "bg-muted"
           }`}
-          style={isOn && !isOffline ? { boxShadow: "0 0 10px hsl(var(--neon-green))" } : undefined}
+          style={
+            isOn && !isOffline
+              ? { boxShadow: "0 0 10px hsl(var(--neon-green))" }
+              : undefined
+          }
         />
-        
-        {isOffline && <WifiOff className="absolute top-4 right-8 w-3 h-3 text-muted-foreground" />}
+
+        {isOffline && (
+          <WifiOff className="absolute top-4 right-8 w-3 h-3 text-muted-foreground" />
+        )}
 
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3">
@@ -124,14 +130,20 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   : "bg-muted border border-muted"
               }`}
             >
-              <Icon className={`w-6 h-6 transition-colors duration-300 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
+              <Icon
+                className={`w-6 h-6 transition-colors duration-300 ${
+                  isOn ? "text-primary" : "text-muted-foreground"
+                }`}
+              />
             </div>
             <div>
               <CardTitle className="text-base">{deviceName}</CardTitle>
               <span className="text-xs text-muted-foreground">
-                {isOffline 
-                  ? "Offline" 
-                  : aiMode ? t("devices.aiControlled") : t("devices.manualMode")}
+                {isOffline
+                  ? "Offline"
+                  : aiMode
+                  ? t("devices.aiControlled")
+                  : t("devices.manualMode")}
               </span>
             </div>
           </div>
@@ -141,10 +153,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           {/* Power Toggle */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("devices.power")}</span>
-            
+
             {/* SWITCH: Local State (isOn) ga bog'langan */}
             <Switch
-              checked={isOn} 
+              checked={isOn}
               onCheckedChange={handleSwitch}
               disabled={isDisabled}
               className="data-[state=checked]:bg-primary transition-colors"
@@ -159,12 +171,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 <span className="text-primary font-mono">{brightness}%</span>
               </div>
               <Slider
-                value={[brightness]} // Local state
-                onValueChange={(val) => handleSliderMove(val, 'brightness')} // Silliq yurish
-                onValueCommit={(val) => handleSliderCommit(val, 'brightness')} // API call
+                value={[brightness]}
+                onValueChange={(val) => handleSliderMove(val, "brightness")}
+                onValueCommit={(val) => handleSliderCommit(val, "brightness")}
                 max={100}
                 step={1}
-                disabled={isDisabled || !isOn} // Agar o'chiq bo'lsa disable
+                disabled={isDisabled || !isOn}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
               />
             </div>
@@ -178,12 +190,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 <span className="text-primary font-mono">{speed}%</span>
               </div>
               <Slider
-                value={[speed]} // Local state
-                onValueChange={(val) => handleSliderMove(val, 'speed')} // Silliq yurish
-                onValueCommit={(val) => handleSliderCommit(val, 'speed')} // API call
+                value={[speed]}
+                onValueChange={(val) => handleSliderMove(val, "speed")}
+                onValueCommit={(val) => handleSliderCommit(val, "speed")}
                 max={100}
                 step={1}
-                disabled={isDisabled || !isOn} // Agar o'chiq bo'lsa disable
+                disabled={isDisabled || !isOn}
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
               />
             </div>
@@ -199,7 +211,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {isOffline ? "Not Connected" : isOn ? t("devices.active") : t("devices.inactive")}
+            {isOffline
+              ? "Not Connected"
+              : isOn
+              ? t("devices.active")
+              : t("devices.inactive")}
           </div>
         </CardContent>
       </Card>

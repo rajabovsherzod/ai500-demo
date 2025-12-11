@@ -109,7 +109,8 @@
     "liveData": "Live data",
     "sensors": "Sensors",
     "devices": "Devices",
-    "aiControlled": "AI Controlled"
+    "aiControlled": "AI Controlled",
+    "plants": "Plants"
   },
   "aiMode": {
     "ai": "AI",
@@ -145,6 +146,43 @@
     "inactive": "Inactive",
     "aiControlled": "AI Controlled",
     "manualMode": "Manual Mode"
+  },
+  "plants": {
+    "title": "Plants",
+    "add": "Add",
+    "addFirst": "Add your first plant",
+    "empty": "No plants added yet",
+    "loading": "Loading plants...",
+    "newPlant": "New Plant",
+    "editPlant": "Edit Plant",
+    "addDescription": "Add a new plant to the greenhouse",
+    "editDescription": "Edit plant information",
+    "name": "Name",
+    "namePlaceholder": "e.g., My Tomato",
+    "type": "Type",
+    "typePlaceholder": "Select type",
+    "variety": "Variety (optional)",
+    "varietyPlaceholder": "e.g., Cherry, Beefsteak...",
+    "save": "Add",
+    "update": "Update",
+    "saving": "Saving...",
+    "deleteConfirm": "Do you want to delete",
+    "created": "Plant added successfully!",
+    "updated": "Plant updated!",
+    "deleted": "Plant deleted!",
+    "validationError": "Please select name and type!",
+    "types": {
+      "tomato": "Tomato",
+      "cucumber": "Cucumber",
+      "pepper": "Pepper",
+      "eggplant": "Eggplant",
+      "lettuce": "Lettuce",
+      "carrot": "Carrot",
+      "onion": "Onion",
+      "garlic": "Garlic",
+      "potato": "Potato",
+      "strawberry": "Strawberry"
+    }
   },
   "settings": {
     "title": "Greenhouse",

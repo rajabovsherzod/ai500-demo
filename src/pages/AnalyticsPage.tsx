@@ -2,113 +2,176 @@ import React, { useState, useMemo } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useGreenhouse } from "@/contexts/GreenhouseContext";
-import Navbar from "@/components/layout/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Calendar } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { useTranslation } from "react-i18next";
+import AgroLoader from "@/components/ui/agro-loader";
 
 const generateHistoricalData = (hours: number, baseValue: number, variance: number) => {
   const data = [];
   const now = new Date();
   for (let i = hours; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-    data.push({ time: time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), value: baseValue + (Math.random() - 0.5) * variance });
+    data.push({
+      time: time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      value: baseValue + (Math.random() - 0.5) * variance,
+    });
   }
   return data;
 };
 
-const sensorColors: Record<string, string> = { temperature: "#ff6b6b", humidity: "#00f0ff", soil_moisture: "#00ff88", co2: "#ffaa00", light: "#bb88ff" };
-const sensorNameKeys: Record<string, string> = { soil_moisture: "sensors.soilMoisture", humidity: "sensors.airHumidity", temperature: "sensors.temperature", co2: "sensors.co2Level", light: "sensors.lightIntensity" };
+const sensorColors: Record<string, string> = {
+  temperature: "#ff6b6b",
+  humidity: "#00f0ff",
+  soil_moisture: "#00ff88",
+  co2: "#ffaa00",
+  light: "#bb88ff",
+};
+
+const sensorNameKeys: Record<string, string> = {
+  soil_moisture: "sensors.soilMoisture",
+  humidity: "sensors.airHumidity",
+  temperature: "sensors.temperature",
+  co2: "sensors.co2Level",
+  light: "sensors.lightIntensity",
+};
 
 const AnalyticsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const { greenhouses } = useGreenhouse();
   const { t } = useTranslation();
-  const [selectedSensorId, setSelectedSensorId] = useState(searchParams.get("sensor") || "1");
+  const [selectedSensorId, setSelectedSensorId] = useState(searchParams.get("sensor") || "temperature");
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("24h");
 
-  const greenhouse = greenhouses.find((g) => g.id === id);
-  const selectedSensor = greenhouse?.sensors.find((s) => s.id === selectedSensorId);
+  const greenhouse = greenhouses.find((g) => String(g.id) === id);
 
   const chartData = useMemo(() => {
-    if (!selectedSensor) return [];
     const hours = timeRange === "24h" ? 24 : timeRange === "7d" ? 168 : 720;
-    const baseValue = selectedSensor.type === "temperature" ? 24 : selectedSensor.type === "humidity" ? 60 : selectedSensor.type === "soil_moisture" ? 65 : selectedSensor.type === "co2" ? 500 : 1000;
-    const variance = selectedSensor.type === "temperature" ? 8 : selectedSensor.type === "humidity" ? 20 : selectedSensor.type === "soil_moisture" ? 15 : selectedSensor.type === "co2" ? 200 : 400;
-    return generateHistoricalData(hours, baseValue, variance);
-  }, [selectedSensor, timeRange]);
+    const baseValues: Record<string, number> = {
+      temperature: 25,
+      humidity: 60,
+      soil_moisture: 45,
+      co2: 800,
+      light: 5000,
+    };
+    const variances: Record<string, number> = {
+      temperature: 10,
+      humidity: 20,
+      soil_moisture: 15,
+      co2: 300,
+      light: 3000,
+    };
+    return generateHistoricalData(hours, baseValues[selectedSensorId] || 50, variances[selectedSensorId] || 20);
+  }, [selectedSensorId, timeRange]);
 
   if (!greenhouse) {
-    return <div className="min-h-screen bg-background flex items-center justify-center"><div className="text-center"><h1 className="font-display text-2xl font-bold mb-4">{t("greenhouse.notFound")}</h1><Link to="/dashboard"><Button variant="neon">{t("greenhouse.backToDashboard")}</Button></Link></div></div>;
+    return <AgroLoader text="Analitika yuklanmoqda" size="lg" />;
   }
 
-  const sensorColor = selectedSensor ? sensorColors[selectedSensor.type] : "#00f0ff";
-  const sensorName = selectedSensor ? t(sensorNameKeys[selectedSensor.type]) : "";
+  const sensorColor = sensorColors[selectedSensorId] || "#00f0ff";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto px-4 pt-24 pb-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div className="flex items-center gap-4 mb-4 md:mb-0">
-              <Link to={`/greenhouse/${id}`}><Button variant="ghost" size="icon"><ArrowLeft className="w-5 h-5" /></Button></Link>
-              <div>
-                <h1 className="font-display text-2xl md:text-3xl font-bold"><span className="text-foreground">{greenhouse.name}</span> <span className="text-primary glow-text">{t("analytics.title")}</span></h1>
-                <p className="text-muted-foreground text-sm">{t("analytics.subtitle")}</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Select value={selectedSensorId} onValueChange={setSelectedSensorId}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("analytics.selectSensor")} /></SelectTrigger>
-                <SelectContent>{greenhouse.sensors.map((sensor) => <SelectItem key={sensor.id} value={sensor.id}>{t(sensorNameKeys[sensor.type])}</SelectItem>)}</SelectContent>
-              </Select>
-              <div className="flex rounded-lg border border-primary/30 overflow-hidden">
-                {(["24h", "7d", "30d"] as const).map((range) => <button key={range} onClick={() => setTimeRange(range)} className={`px-4 py-2 text-sm font-medium transition-colors ${timeRange === range ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground hover:text-foreground"}`}>{range}</button>)}
-              </div>
+    <main className="container mx-auto px-4 pt-24 pb-12">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <div className="flex items-center gap-4 mb-4 md:mb-0">
+            <Link to={`/greenhouse/${id}`}>
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="font-display text-2xl md:text-3xl font-bold">
+                <span className="text-foreground">{t("analytics.title") || "Analitika"}</span>
+              </h1>
+              <p className="text-muted-foreground text-sm">{greenhouse.name}</p>
             </div>
           </div>
-
-          {selectedSensor && (
-            <Card variant="glow" className="mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div><p className="text-muted-foreground text-sm">{t("analytics.current")} {sensorName}</p><p className="font-display text-4xl font-bold" style={{ color: sensorColor, textShadow: `0 0 20px ${sensorColor}50` }}>{selectedSensor.value.toFixed(1)} {selectedSensor.unit}</p></div>
-                  <div className="text-right"><p className="text-muted-foreground text-sm">{t("analytics.range")}</p><p className="text-foreground">{selectedSensor.min} - {selectedSensor.max} {selectedSensor.unit}</p></div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card variant="glass">
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5 text-primary" />{sensorName} {t("analytics.overTime")}</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs><linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={sensorColor} stopOpacity={0.3} /><stop offset="95%" stopColor={sensorColor} stopOpacity={0} /></linearGradient></defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} domain={["auto", "auto"]} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: `1px solid ${sensorColor}40`, borderRadius: "8px" }} formatter={(value: number) => [`${value.toFixed(1)} ${selectedSensor?.unit}`, sensorName]} />
-                    <Area type="monotone" dataKey="value" stroke={sensorColor} strokeWidth={2} fill="url(#colorValue)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-6">
-            <h3 className="font-display text-lg font-semibold mb-4">{t("analytics.quickAccess")}</h3>
-            <div className="flex flex-wrap gap-2">{greenhouse.sensors.map((sensor) => <Button key={sensor.id} variant={selectedSensorId === sensor.id ? "neon" : "outline"} size="sm" onClick={() => setSelectedSensorId(sensor.id)}>{t(sensorNameKeys[sensor.type])}</Button>)}</div>
+          <div className="flex gap-3">
+            <Select value={timeRange} onValueChange={(v) => setTimeRange(v as "24h" | "7d" | "30d")}>
+              <SelectTrigger className="w-32">
+                <Calendar className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">24 soat</SelectItem>
+                <SelectItem value="7d">7 kun</SelectItem>
+                <SelectItem value="30d">30 kun</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </motion.div>
-      </main>
-    </div>
+        </div>
+
+        {/* Sensor Selector */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {Object.keys(sensorColors).map((sensorType) => (
+            <Button
+              key={sensorType}
+              variant={selectedSensorId === sensorType ? "neon" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSensorId(sensorType)}
+            >
+              {t(sensorNameKeys[sensorType]) || sensorType}
+            </Button>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <Card variant="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: sensorColor }} />
+              {t(sensorNameKeys[selectedSensorId]) || selectedSensorId}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={sensorColor} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={sensorColor} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="time"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={sensorColor}
+                    strokeWidth={2}
+                    fill="url(#colorValue)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </main>
   );
 };
 
