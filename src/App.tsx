@@ -3,10 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom"; 
-import { useAuth } from "@/hooks/use-auth"; 
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import { GreenhouseProvider } from "@/contexts/GreenhouseContext";
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer"; 
+
+// ChatWidget importi o'z joyida qoladi
+import ChatWidget from "@/components/ChatWidget"; 
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -21,18 +25,29 @@ import { whoAmI } from "./api/auth.api";
 
 const queryClient = new QueryClient();
 
-// --- PROTECTED LAYOUT (Navbar + Content) ---
+// --- PROTECTED LAYOUT (O'ZGARISH SHU YERDA) ---
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  
+ 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <Outlet />
+      <main className="flex-1 w-full">
+        <Outlet />
+      </main>
+      <Footer />
+      
+      {/* 
+         !!! ChatWidget shu yerga ko'chirildi.
+         Endi u faqat ProtectedLayout ishlatadigan sahifalarda 
+         (Dashboard, Profile, Greenhouse...) ko'rinadi.
+         Login va Registerda chiqmaydi.
+      */}
+      <ChatWidget />
     </div>
   );
 };
@@ -48,13 +63,10 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      
-      {/* Public routes */}
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-      
-      {/* Protected routes - Navbar shu yerda bitta marta */}
+     
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -62,7 +74,7 @@ const AppRoutes = () => {
         <Route path="/greenhouse/:id/settings" element={<GreenhouseSettingsPage />} />
         <Route path="/greenhouse/:id/analytics" element={<AnalyticsPage />} />
       </Route>
-      
+     
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -103,9 +115,17 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          
           <BrowserRouter>
             <AppRoutes />
+
+            {/* 
+               ChatWidget bu yerdan OLIB TASHLANDI.
+               Chunki bu yerda tursa barcha sahifalarda chiqib qoladi.
+            */}
+            
           </BrowserRouter>
+          
         </TooltipProvider>
       </GreenhouseProvider>
     </QueryClientProvider>

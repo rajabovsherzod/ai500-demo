@@ -30,7 +30,8 @@ interface DeviceCardProps {
   };
   type: string;
   aiMode: boolean;
-  onToggle: (newState: boolean) => void; // O'ZGARISH: Yangi state qabul qiladi
+  // O'ZGARISH: onToggle endi ixtiyoriy (optional) (?)
+  onToggle?: (newState: boolean) => void; 
   onBrightnessChange?: (value: number) => void;
   onSpeedChange?: (value: number) => void;
 }
@@ -54,13 +55,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   const deviceName = t(deviceNameKeys[type] || "Unknown Device");
 
   // --- LOCAL STATE ---
-  // Bular faqat UI silliq ishlashi uchun
   const [isOn, setIsOn] = useState(device?.isOn || false);
   const [brightness, setBrightness] = useState(device?.brightness || 0);
   const [speed, setSpeed] = useState(device?.speed || 0);
 
   // --- SYNC WITH SERVER ---
-  // Serverdan yangi ma'lumot kelsa, local stateni yangilaymiz.
   useEffect(() => {
     if (device) {
       setIsOn(device.isOn);
@@ -73,8 +72,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   // 1. Switch bosilganda
   const handleSwitch = (checked: boolean) => {
-    setIsOn(checked);    // 1. Darhol vizual o'zgartiramiz
-    onToggle(checked);   // 2. O'ZGARISH: Yangi state ni API ga yuboramiz
+    setIsOn(checked);    // 1. Vizual o'zgarish
+    // O'ZGARISH: Agar funksiya mavjud bo'lsa, uni chaqiramiz
+    if (onToggle) {
+        onToggle(checked);
+    }
   };
 
   // 2. Slider surilayotganda (Faqat vizual)
@@ -150,18 +152,18 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Power Toggle */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{t("devices.power")}</span>
-
-            {/* SWITCH: Local State (isOn) ga bog'langan */}
-            <Switch
-              checked={isOn}
-              onCheckedChange={handleSwitch}
-              disabled={isDisabled}
-              className="data-[state=checked]:bg-primary transition-colors"
-            />
-          </div>
+          {/* O'ZGARISH: Power Toggle faqat onToggle prop bor bo'lsa ko'rinadi */}
+          {onToggle && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{t("devices.power")}</span>
+              <Switch
+                checked={isOn}
+                onCheckedChange={handleSwitch}
+                disabled={isDisabled}
+                className="data-[state=checked]:bg-primary transition-colors"
+              />
+            </div>
+          )}
 
           {/* Brightness Slider */}
           {type === "led" && (
@@ -176,7 +178,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onValueCommit={(val) => handleSliderCommit(val, "brightness")}
                 max={100}
                 step={1}
-                disabled={isDisabled || !isOn}
+                disabled={isDisabled} // isOn tekshiruvi olib tashlandi, chunki switch yo'q bo'lishi mumkin
                 className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
               />
             </div>

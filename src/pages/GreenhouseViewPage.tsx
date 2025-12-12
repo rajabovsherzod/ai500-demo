@@ -167,7 +167,7 @@ const GreenhouseViewPage: React.FC = () => {
     }
   };
 
-  // Delete handlers - chiroyli dialog uchun
+  // Delete handlers
   const handleDeleteClick = (plant: Plant) => {
     setPlantToDelete(plant);
     setIsDeleteDialogOpen(true);
@@ -211,9 +211,6 @@ const GreenhouseViewPage: React.FC = () => {
 
   // ============ PREPARE DATA ============
   const stats = greenhouse.stats || {};
-  const apiDevices = (greenhouse as any).devices || [];
-  
-  // Plants loading holati - faqat birinchi marta fetch qilganda
   const showPlantsLoading = plantsLoading && !plantsFetched;
 
   // ============ MAIN RENDER ============
@@ -346,46 +343,50 @@ const GreenhouseViewPage: React.FC = () => {
         </motion.section>
 
         {/* DEVICES SECTION */}
-        {/* DEVICES SECTION */}
-      <motion.section>
-        <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
-          {t("greenhouse.devices")}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {EXPECTED_DEVICES.map((type, index) => {
-            // Stats dan device holatini olish
-            const stateKey = DEVICE_STATE_MAP[type];
-            const isOn = stateKey ? Boolean((stats as any)[stateKey]) : false;
+        <motion.section>
+          <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            {t("greenhouse.devices")}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {EXPECTED_DEVICES.map((type, index) => {
+              // Stats dan device holatini olish
+              const stateKey = DEVICE_STATE_MAP[type];
+              const isOn = stateKey ? Boolean((stats as any)[stateKey]) : false;
 
-            const deviceData = {
-              id: type,
-              type: type,
-              isOn: isOn,
-              brightness: 50,
-              speed: 50
-            };
+              const deviceData = {
+                id: type,
+                type: type,
+                isOn: isOn,
+                brightness: 50,
+                speed: 50
+              };
 
-            return (
-              <motion.div 
-                key={type} 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: 0.3 + index * 0.05 }}
-              >
-                <DeviceCard
-                  type={type}
-                  device={deviceData}
-                  aiMode={localAiMode}
-                  onToggle={(newState) => handleDeviceToggle(type, newState)}
-                  onBrightnessChange={(val) => handleSliderChange(type, val, 'brightness')}
-                  onSpeedChange={(val) => handleSliderChange(type, val, 'speed')}
-                />
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.section>
+              // O'ZGARISH: Agar type 'led' bo'lsa, onToggle ni undefined qilamiz
+              // Boshqa devicelar uchun oddiy funksiyani beramiz
+              const isLed = type === 'led';
+              
+              return (
+                <motion.div 
+                  key={type} 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.3 + index * 0.05 }}
+                >
+                  <DeviceCard
+                    type={type}
+                    device={deviceData}
+                    aiMode={localAiMode}
+                    // LED uchun Switch funksiyasini uzib qo'yamiz
+                    onToggle={isLed ? undefined : (newState) => handleDeviceToggle(type, newState)}
+                    onBrightnessChange={(val) => handleSliderChange(type, val, 'brightness')}
+                    onSpeedChange={(val) => handleSliderChange(type, val, 'speed')}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.section>
 
       </motion.div>
 
