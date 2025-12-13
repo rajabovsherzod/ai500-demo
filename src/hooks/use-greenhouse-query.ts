@@ -20,7 +20,6 @@ export const useGreenhouses = () => {
   return useQuery({
     queryKey: ["greenhouses"],
     queryFn: getGreenhouses,
-    refetchInterval: 5000, 
   });
 };
 
@@ -43,7 +42,6 @@ export const useGreenhouseById = (id: string | undefined) => {
     queryKey: ["greenhouse", id],
     queryFn: () => getGreenhouseById(Number(id)),
     enabled: !!id,
-    refetchInterval: 4000, // 4 sekund har safar yangilanadi (shu sabab o'chib qolyapti)
   });
 };
 
