@@ -256,6 +256,11 @@ const GreenhouseViewPage: React.FC = () => {
     );
 
   const stats = greenhouse.stats || {};
+  console.log("🔍 DIAGNOSTIKA:", {
+    aiMode: greenhouse.aiMode,
+    aiModeType: typeof greenhouse.aiMode,
+    isAiModeTruthy: !!greenhouse.aiMode
+  });
   const showPlantsLoading = plantsLoading && !plantsFetched;
 
   return (
