@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import AiModeToggle from "@/components/greenhouse/AiModeToggle";
@@ -6,11 +6,30 @@ import SensorCard from "@/components/greenhouse/SensorCard";
 import DeviceCard from "@/components/greenhouse/DeviceCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Settings, LineChart, AlertTriangle, Plus, Sprout, Loader2, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Settings,
+  LineChart,
+  AlertTriangle,
+  Plus,
+  Sprout,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useGreenhouseById, useDeviceSwitch } from "@/hooks/use-greenhouse-query";
+import {
+  useGreenhouseById,
+  useDeviceSwitch,
+  useAiModeSwitch,
+} from "@/hooks/use-greenhouse-query";
 import AgroLoader from "@/components/ui/agro-loader";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,11 +40,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PlantCard from "@/components/greenhouse/PlantCard";
-import { usePlantsByGreenhouse, usePlantTypes, useCreatePlant, useUpdatePlant, useDeletePlant } from "@/hooks/use-plants-query";
+import {
+  usePlantsByGreenhouse,
+  usePlantTypes,
+  useCreatePlant,
+  useUpdatePlant,
+  useDeletePlant,
+} from "@/hooks/use-plants-query";
 import { Plant } from "@/types/plant";
 import { toast } from "sonner";
 
@@ -40,26 +71,38 @@ const EXPECTED_SENSORS = [
 
 const EXPECTED_DEVICES = ["fan", "led", "water_pump", "humidifier"];
 
-// UI device type -> API stats key (holat olish uchun)
+// 1. HOLATNI O'QISH UCHUN (Stats JSON ichidagi kalitlar)
+// Bu yerda backenddan kelayotgan "stats" ichidagi nomlar qoladi (o'zgartirmang)
 const DEVICE_STATE_MAP: Record<string, string> = {
   fan: "fan",
   led: "led",
-  water_pump: "soil_water_pump",
-  humidifier: "air_water_pump"
+  water_pump: "soil_water_pump", // Stats ichida shunday kelayotgandi
+  humidifier: "air_water_pump", // Stats ichida shunday kelayotgandi
 };
 
-// UI device type -> API endpoint device name (switch qilish uchun)
+// 2. BOSHQARISH UCHUN (API URL ga yuboriladigan nomlar)
+// ⚠️ TUZATILDI: Swaggerdagi "Available values" bo'yicha
 const UI_TO_API_MAP: Record<string, string> = {
   fan: "fan",
   led: "led",
-  water_pump: "moisture",
-  humidifier: "humidity"
+  water_pump: "moisture", // Swaggerda: moisture
+  humidifier: "humidity", // Swaggerda: humidity
 };
 
-// Fallback plant types
-const FALLBACK_PLANT_TYPES = ["tomato", "cucumber", "pepper", "eggplant", "lettuce", "carrot", "onion", "garlic"];
+const FALLBACK_PLANT_TYPES = [
+  "tomato",
+  "cucumber",
+  "pepper",
+  "eggplant",
+  "lettuce",
+  "carrot",
+  "onion",
+  "garlic",
+];
 
-const parseStatValue = (value: string | number | undefined | null): number | undefined => {
+const parseStatValue = (
+  value: string | number | undefined | null
+): number | undefined => {
   if (value === undefined || value === null) return undefined;
   if (typeof value === "number") return value;
   if (typeof value === "string") {
@@ -78,42 +121,46 @@ const GreenhouseViewPage: React.FC = () => {
   // ============ GREENHOUSE DATA ============
   const { data: greenhouse, isLoading, isError } = useGreenhouseById(id);
   const { mutate: switchDevice } = useDeviceSwitch();
+  const { mutate: switchAi } = useAiModeSwitch();
 
   // ============ PLANTS DATA ============
-  const { 
-    data: plants = [], 
-    isLoading: plantsLoading, 
-    isError: plantsError,
-    isFetched: plantsFetched 
+  const {
+    data: plants = [],
+    isLoading: plantsLoading,
+    isFetched: plantsFetched,
   } = usePlantsByGreenhouse(greenhouseIdNum);
-  
-  const { data: plantTypesData = FALLBACK_PLANT_TYPES } = usePlantTypes();
-  const plantTypes = plantTypesData.length > 0 ? plantTypesData : FALLBACK_PLANT_TYPES;
-  
-  const { mutate: createPlantMutation, isPending: isCreatingPlant } = useCreatePlant();
-  const { mutate: updatePlantMutation, isPending: isUpdatingPlant } = useUpdatePlant();
-  const { mutate: deletePlantMutation, isPending: isDeletingPlant } = useDeletePlant();
+
+  const { data: plantTypesData = FALLBACK_PLANT_TYPES } =
+    usePlantTypes(greenhouseIdNum);
+  const plantTypes =
+    plantTypesData.length > 0 ? plantTypesData : FALLBACK_PLANT_TYPES;
+
+  const { mutate: createPlantMutation, isPending: isCreatingPlant } =
+    useCreatePlant();
+  const { mutate: updatePlantMutation, isPending: isUpdatingPlant } =
+    useUpdatePlant();
+  const { mutate: deletePlantMutation, isPending: isDeletingPlant } =
+    useDeletePlant();
 
   // ============ LOCAL STATE ============
-  const [localAiMode, setLocalAiMode] = useState(false);
   const [isPlantModalOpen, setIsPlantModalOpen] = useState(false);
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
-  const [plantForm, setPlantForm] = useState({ name: "", type: "", variety: "" });
-  
-  // Delete confirmation state
+  const [plantForm, setPlantForm] = useState({
+    name: "",
+    type: "",
+    variety: "",
+  });
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
 
-  // ============ EFFECTS ============
-  useEffect(() => {
-    if (greenhouse?.aiMode !== undefined) {
-      setLocalAiMode(greenhouse.aiMode);
-    }
-  }, [greenhouse]);
-
   // ============ HANDLERS ============
   const handleAiToggle = () => {
-    setLocalAiMode((prev) => !prev);
+    if (!greenhouse || !greenhouseIdNum) return;
+    switchAi({
+      greenhouseId: greenhouseIdNum,
+      state: !greenhouse.aiMode,
+    });
   };
 
   const handleDeviceToggle = (uiType: string, newState: boolean) => {
@@ -123,19 +170,25 @@ const GreenhouseViewPage: React.FC = () => {
     switchDevice({
       greenhouseId: Number(id),
       deviceName: apiName,
-      state: newState
+      state: newState,
     });
   };
 
-  const handleSliderChange = (uiType: string, value: number, setting: 'brightness' | 'speed') => {
-    console.log(`Setting ${setting} for ${uiType} to ${value}`);
+  // Slider faqat FAN uchun ishlaydi
+  const handleSliderChange = (uiType: string, value: number) => {
+    console.log(`Setting speed for ${uiType} to ${value}`);
+    // Bu yerda kelajakda Fan tezligi uchun API chaqiruvi bo'lishi mumkin
   };
 
   // Plant handlers
   const handleOpenPlantModal = (plant?: Plant) => {
     if (plant) {
       setEditingPlant(plant);
-      setPlantForm({ name: plant.name, type: plant.type, variety: plant.variety });
+      setPlantForm({
+        name: plant.name,
+        type: plant.type,
+        variety: plant.variety,
+      });
     } else {
       setEditingPlant(null);
       setPlantForm({ name: "", type: "", variety: "" });
@@ -148,26 +201,23 @@ const GreenhouseViewPage: React.FC = () => {
       toast.error(t("plants.validationError"));
       return;
     }
-
     if (editingPlant) {
-      updatePlantMutation({
-        greenhouseId: greenhouseIdNum!,
-        plantId: editingPlant.id,
-        data: plantForm
-      }, {
-        onSuccess: () => setIsPlantModalOpen(false)
-      });
+      updatePlantMutation(
+        {
+          greenhouseId: greenhouseIdNum!,
+          plantId: editingPlant.id,
+          data: plantForm,
+        },
+        { onSuccess: () => setIsPlantModalOpen(false) }
+      );
     } else {
-      createPlantMutation({
-        greenhouseId: greenhouseIdNum!,
-        data: plantForm
-      }, {
-        onSuccess: () => setIsPlantModalOpen(false)
-      });
+      createPlantMutation(
+        { greenhouseId: greenhouseIdNum!, data: plantForm },
+        { onSuccess: () => setIsPlantModalOpen(false) }
+      );
     }
   };
 
-  // Delete handlers
   const handleDeleteClick = (plant: Plant) => {
     setPlantToDelete(plant);
     setIsDeleteDialogOpen(true);
@@ -175,15 +225,15 @@ const GreenhouseViewPage: React.FC = () => {
 
   const handleConfirmDelete = () => {
     if (plantToDelete) {
-      deletePlantMutation({
-        greenhouseId: greenhouseIdNum!,
-        plantId: plantToDelete.id
-      }, {
-        onSuccess: () => {
-          setIsDeleteDialogOpen(false);
-          setPlantToDelete(null);
+      deletePlantMutation(
+        { greenhouseId: greenhouseIdNum!, plantId: plantToDelete.id },
+        {
+          onSuccess: () => {
+            setIsDeleteDialogOpen(false);
+            setPlantToDelete(null);
+          },
         }
-      });
+      );
     }
   };
 
@@ -192,12 +242,9 @@ const GreenhouseViewPage: React.FC = () => {
     setPlantToDelete(null);
   };
 
-  // ============ CONDITIONAL RENDERS ============
-  if (isLoading) {
-    return <AgroLoader text={t("common.loading")} size="lg" />;
-  }
-
-  if (isError || !greenhouse) {
+  // ============ RENDER ============
+  if (isLoading) return <AgroLoader text={t("common.loading")} size="lg" />;
+  if (isError || !greenhouse)
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <AlertTriangle className="w-12 h-12 text-red-500" />
@@ -207,17 +254,16 @@ const GreenhouseViewPage: React.FC = () => {
         </Link>
       </div>
     );
-  }
 
-  // ============ PREPARE DATA ============
   const stats = greenhouse.stats || {};
   const showPlantsLoading = plantsLoading && !plantsFetched;
 
-  // ============ MAIN RENDER ============
   return (
     <main className="container mx-auto px-4 pt-24 pb-12">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div className="flex items-center gap-4 mb-4 md:mb-0">
@@ -255,9 +301,12 @@ const GreenhouseViewPage: React.FC = () => {
         </div>
 
         {/* AI MODE TOGGLE */}
-        <motion.div className="mb-8">
-          <AiModeToggle aiMode={localAiMode} onToggle={handleAiToggle} />
-        </motion.div>
+        <div className="mb-8">
+          <AiModeToggle
+            aiMode={!!greenhouse.aiMode}
+            onToggle={handleAiToggle}
+          />
+        </div>
 
         {/* SENSORS SECTION */}
         <motion.section className="mb-10">
@@ -269,24 +318,30 @@ const GreenhouseViewPage: React.FC = () => {
             {EXPECTED_SENSORS.map((def, index) => {
               const rawValue = (stats as any)[def.key];
               const value = parseStatValue(rawValue);
-              const sensorData = value !== undefined ? {
-                id: def.key,
-                type: def.type,
-                value: value,
-                unit: def.unit,
-                min: def.min,
-                max: def.max,
-                status: "good" as const
-              } : undefined;
-
+              const sensorData =
+                value !== undefined
+                  ? {
+                      id: def.key,
+                      type: def.type,
+                      value: value,
+                      unit: def.unit,
+                      min: def.min,
+                      max: def.max,
+                      status: "good" as const,
+                    }
+                  : undefined;
               return (
-                <motion.div 
-                  key={def.key} 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }} 
+                <motion.div
+                  key={def.key}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + index * 0.05 }}
                 >
-                  <SensorCard type={def.type} sensor={sensorData} greenhouseId={id} />
+                  <SensorCard
+                    type={def.type}
+                    sensor={sensorData}
+                    greenhouseId={id}
+                  />
                 </motion.div>
               );
             })}
@@ -300,12 +355,15 @@ const GreenhouseViewPage: React.FC = () => {
               <Sprout className="w-5 h-5 text-primary" />
               {t("greenhouse.plants")}
             </h2>
-            <Button variant="outline" size="sm" onClick={() => handleOpenPlantModal()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenPlantModal()}
+            >
               <Plus className="w-4 h-4 mr-2" />
               {t("plants.add")}
             </Button>
           </div>
-
           {showPlantsLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm py-4">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -316,7 +374,12 @@ const GreenhouseViewPage: React.FC = () => {
               <CardContent className="py-8 text-center">
                 <Sprout className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
                 <p className="text-muted-foreground">{t("plants.empty")}</p>
-                <Button variant="neon" size="sm" className="mt-4" onClick={() => handleOpenPlantModal()}>
+                <Button
+                  variant="neon"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => handleOpenPlantModal()}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   {t("plants.addFirst")}
                 </Button>
@@ -325,7 +388,7 @@ const GreenhouseViewPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {plants.map((plant, index) => (
-                <motion.div 
+                <motion.div
                   key={plant.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -350,47 +413,52 @@ const GreenhouseViewPage: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {EXPECTED_DEVICES.map((type, index) => {
-              // Stats dan device holatini olish
+              // 1. Stats dan holatni olish
               const stateKey = DEVICE_STATE_MAP[type];
-              const isOn = stateKey ? Boolean((stats as any)[stateKey]) : false;
 
+              // Backend stats ichida bu kalit bormi?
+              const statsValue = stateKey
+                ? (stats as any)[stateKey]
+                : undefined;
+
+              // Agar statsValue 1 yoki true bo'lsa -> true, aks holda false
+              // Boolean(null) -> false, Boolean(undefined) -> false
+              const isOn = Boolean(statsValue);
+
+              // 2. DeviceData obyektini har doim yaratamiz
               const deviceData = {
                 id: type,
                 type: type,
                 isOn: isOn,
-                brightness: 50,
-                speed: 50
+                brightness: 0,
+                speed: 50,
               };
 
-              // O'ZGARISH: Agar type 'led' bo'lsa, onToggle ni undefined qilamiz
-              // Boshqa devicelar uchun oddiy funksiyani beramiz
-              const isLed = type === 'led';
-              
               return (
-                <motion.div 
-                  key={type} 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }} 
+                <motion.div
+                  key={type}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 + index * 0.05 }}
                 >
                   <DeviceCard
                     type={type}
                     device={deviceData}
-                    aiMode={localAiMode}
-                    // LED uchun Switch funksiyasini uzib qo'yamiz
-                    onToggle={isLed ? undefined : (newState) => handleDeviceToggle(type, newState)}
-                    onBrightnessChange={(val) => handleSliderChange(type, val, 'brightness')}
-                    onSpeedChange={(val) => handleSliderChange(type, val, 'speed')}
+                    // AI Mode yoniq bo'lsa disable bo'ladi
+                    aiMode={!!greenhouse.aiMode}
+                    // Toggle
+                    onToggle={(newState) => handleDeviceToggle(type, newState)}
+                    // Slider
+                    onSpeedChange={(val) => handleSliderChange(type, val)}
                   />
                 </motion.div>
               );
             })}
           </div>
         </motion.section>
-
       </motion.div>
 
-      {/* PLANT ADD/EDIT MODAL */}
+      {/* MODALS */}
       <Dialog open={isPlantModalOpen} onOpenChange={setIsPlantModalOpen}>
         <DialogContent className="bg-card/95 backdrop-blur-xl border-primary/30">
           <DialogHeader>
@@ -399,24 +467,26 @@ const GreenhouseViewPage: React.FC = () => {
               {editingPlant ? t("plants.editPlant") : t("plants.newPlant")}
             </DialogTitle>
             <DialogDescription>
-              {editingPlant ? t("plants.editDescription") : t("plants.addDescription")}
+              {editingPlant
+                ? t("plants.editDescription")
+                : t("plants.addDescription")}
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label>{t("plants.name")} *</Label>
               <Input
                 placeholder={t("plants.namePlaceholder")}
                 value={plantForm.name}
-                onChange={(e) => setPlantForm({ ...plantForm, name: e.target.value })}
+                onChange={(e) =>
+                  setPlantForm({ ...plantForm, name: e.target.value })
+                }
               />
             </div>
-
             <div className="space-y-2">
               <Label>{t("plants.type")} *</Label>
-              <Select 
-                value={plantForm.type} 
+              <Select
+                value={plantForm.type}
                 onValueChange={(v) => setPlantForm({ ...plantForm, type: v })}
               >
                 <SelectTrigger>
@@ -431,36 +501,48 @@ const GreenhouseViewPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label>{t("plants.variety")}</Label>
               <Input
                 placeholder={t("plants.varietyPlaceholder")}
                 value={plantForm.variety}
-                onChange={(e) => setPlantForm({ ...plantForm, variety: e.target.value })}
+                onChange={(e) =>
+                  setPlantForm({ ...plantForm, variety: e.target.value })
+                }
               />
             </div>
-
             <div className="flex gap-2 justify-end pt-2">
-              <Button variant="ghost" onClick={() => setIsPlantModalOpen(false)}>
+              <Button
+                variant="ghost"
+                onClick={() => setIsPlantModalOpen(false)}
+              >
                 {t("common.cancel")}
               </Button>
-              <Button 
-                variant="neon" 
+              <Button
+                variant="neon"
                 onClick={handleSavePlant}
                 disabled={isCreatingPlant || isUpdatingPlant}
               >
-                {(isCreatingPlant || isUpdatingPlant) ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("plants.saving")}</>
-                ) : editingPlant ? t("plants.update") : t("plants.save")}
+                {isCreatingPlant || isUpdatingPlant ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                    {t("plants.saving")}
+                  </>
+                ) : editingPlant ? (
+                  t("plants.update")
+                ) : (
+                  t("plants.save")
+                )}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* DELETE CONFIRMATION DIALOG */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-destructive/30">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
@@ -468,7 +550,10 @@ const GreenhouseViewPage: React.FC = () => {
               {t("common.delete")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              <span className="font-semibold text-foreground">"{plantToDelete?.name}"</span> {t("plants.deleteConfirm")}
+              <span className="font-semibold text-foreground">
+                "{plantToDelete?.name}"
+              </span>{" "}
+              {t("plants.deleteConfirm")}
               <br />
               <span className="text-sm text-destructive/80 mt-2 block">
                 Bu amalni qaytarib bo'lmaydi.
@@ -476,7 +561,10 @@ const GreenhouseViewPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDelete} disabled={isDeletingPlant}>
+            <AlertDialogCancel
+              onClick={handleCancelDelete}
+              disabled={isDeletingPlant}
+            >
               {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
@@ -485,9 +573,14 @@ const GreenhouseViewPage: React.FC = () => {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {isDeletingPlant ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> O'chirilmoqda...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                  O'chirilmoqda...
+                </>
               ) : (
-                <><Trash2 className="w-4 h-4 mr-2" /> {t("common.delete")}</>
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" /> {t("common.delete")}
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Boshqaruv paneli",
+    "analyze": "AI Tahlil",
     "profile": "Profil",
     "login": "Kirish",
     "logout": "Chiqish",
@@ -146,6 +147,42 @@
     "inactive": "Nofaol",
     "aiControlled": "AI tomonidan boshqariladi",
     "manualMode": "Qo'lda rejim"
+  },
+  "analyze": {
+    "title": "AI O'simlik Tahlili",
+    "subtitle": "O'simlik rasmini yuklang va sun'iy intellekt yordamida kasalliklarni aniqlang, holatini tekshiring va professional maslahatlar oling.",
+    "uploadTitle": "Rasm yuklash uchun bosing",
+    "uploadSubtitle": "yoki rasmni shu yerga tashlang",
+    "uploadFormat": "JPG, PNG (Maks 5MB)",
+    "selectBtn": "Rasmni tanlash",
+    "startBtn": "Tahlilni boshlash",
+    "analyzing": {
+      "text": "Rasm tahlil qilinmoqda...",
+      "step1": "Barg tuzilishi o'rganilmoqda...",
+      "step2": "Kasallik belgilari qidirilmoqda...",
+      "step3": "AI ma'lumotlar bazasi bilan solishtirilmoqda...",
+      "step4": "Hisobot tayyorlanmoqda...",
+      "success": "Tahlil yakunlandi! 🌿"
+    },
+    "results": {
+      "identified": "ANIQLANGAN O'SIMLIK",
+      "confidence": "Ishonch darajasi",
+      "healthScore": "Salomatlik darajasi",
+      "healthStatus": {
+        "excellent": "A'lo",
+        "average": "O'rtacha",
+        "critical": "Kritik"
+      },
+      "diagnosis": "Diagnoz",
+      "symptoms": "Simptomlar",
+      "recommendations": "Tavsiyalar va Davolash",
+      "newScan": "Boshqa rasm yuklash",
+      "saveReport": "Hisobotni saqlash",
+      "reportSaved": "Hisobot saqlandi!"
+    },
+    "error": {
+      "invalidFile": "Iltimos, faqat rasm yuklang (JPG, PNG)"
+    }
   },
   "plants": {
     "title": "O'simliklar",

@@ -1,22 +1,20 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Leaf, User, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
+// YANGI: ScanLine iconi qo'shildi
+import { Leaf, User, LogOut, LayoutDashboard, Menu, X, ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// 1-MUHIM: Context emas, Hookni ulaymiz
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Navbar: React.FC = () => {
-  // Hookdan kerakli funksiyalarni olamiz
   const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
 
-  // Userni to'g'ridan-to'g'ri localStorage'dan ham o'qiymiz
   const storedUser = (() => {
     try {
       const raw = localStorage.getItem("agroai_user");
@@ -29,16 +27,27 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    // Hook ichida window.location bo'lsa ham, bu yerda ham yo'naltiramiz
     navigate("/login");
   };
 
-  console.log("Stored user:" , storedUser)
-
+  // YANGI: O'rtaga "analyze" linki qo'shildi
   const navLinks = isAuthenticated
     ? [
-        { to: "/dashboard", label: t("nav.dashboard") || "Dashboard", icon: LayoutDashboard },
-        { to: "/profile", label: t("nav.profile") || "Profil", icon: User },
+        { 
+          to: "/dashboard", 
+          label: t("nav.dashboard") || "Dashboard", 
+          icon: LayoutDashboard 
+        },
+        { 
+          to: "/analyze", 
+          label: t("nav.analyze") || "AI Tahlil", 
+          icon: ScanLine // Skanerlash belgisi
+        },
+        { 
+          to: "/profile", 
+          label: t("nav.profile") || "Profil", 
+          icon: User 
+        },
       ]
     : [];
 
@@ -88,7 +97,7 @@ const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <span className="text-primary font-semibold">
+                <span className="text-primary font-semibold hidden lg:inline-block">
                   {storedUser?.first_name ||
                     storedUser?.full_name ||
                     storedUser?.email ||
@@ -142,17 +151,24 @@ const Navbar: React.FC = () => {
               className="md:hidden overflow-hidden border-t border-primary/20 bg-background/95 backdrop-blur-xl"
             >
               <div className="flex flex-col gap-2 p-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-foreground hover:bg-primary/10 transition-colors"
-                  >
-                    <link.icon className="w-5 h-5 text-primary" />
-                    {link.label}
-                  </Link>
-                ))}
+                {navLinks.map((link) => {
+                  const isActive = location.pathname === link.to;
+                  return (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-colors ${
+                         isActive 
+                           ? "bg-primary/10 text-primary" 
+                           : "text-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <link.icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                      {link.label}
+                    </Link>
+                  );
+                })}
 
                 {isAuthenticated ? (
                   <button

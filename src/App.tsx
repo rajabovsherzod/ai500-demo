@@ -9,7 +9,6 @@ import { GreenhouseProvider } from "@/contexts/GreenhouseContext";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer"; 
 
-// ChatWidget importi o'z joyida qoladi
 import ChatWidget from "@/components/ChatWidget"; 
 
 import LoginPage from "./pages/LoginPage";
@@ -19,16 +18,18 @@ import ProfilePage from "./pages/ProfilePage";
 import GreenhouseViewPage from "./pages/GreenhouseViewPage";
 import GreenhouseSettingsPage from "./pages/GreenhouseSettingsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+// YANGI: Import
+import AiAnalysisPage from "./pages/AiAnalysisPage"; 
 import NotFound from "./pages/NotFound";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import { whoAmI } from "./api/auth.api";
 
 const queryClient = new QueryClient();
 
-// --- PROTECTED LAYOUT (O'ZGARISH SHU YERDA) ---
+// --- PROTECTED LAYOUT ---
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
- 
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -40,13 +41,6 @@ const ProtectedLayout: React.FC = () => {
         <Outlet />
       </main>
       <Footer />
-      
-      {/* 
-         !!! ChatWidget shu yerga ko'chirildi.
-         Endi u faqat ProtectedLayout ishlatadigan sahifalarda 
-         (Dashboard, Profile, Greenhouse...) ko'rinadi.
-         Login va Registerda chiqmaydi.
-      */}
       <ChatWidget />
     </div>
   );
@@ -66,21 +60,25 @@ const AppRoutes = () => {
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-     
+      
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        {/* YANGI ROUTE: */}
+        <Route path="/analyze" element={<AiAnalysisPage />} /> 
+        
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/greenhouse/:id" element={<GreenhouseViewPage />} />
         <Route path="/greenhouse/:id/settings" element={<GreenhouseSettingsPage />} />
         <Route path="/greenhouse/:id/analytics" element={<AnalyticsPage />} />
       </Route>
-     
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
 
 const App = () => {
+  // ... (Auth logic avvalgidek qoladi) ...
   useEffect(() => {
     const initAuth = async () => {
       const currentToken = localStorage.getItem("agroai_token");
@@ -118,12 +116,6 @@ const App = () => {
           
           <BrowserRouter>
             <AppRoutes />
-
-            {/* 
-               ChatWidget bu yerdan OLIB TASHLANDI.
-               Chunki bu yerda tursa barcha sahifalarda chiqib qoladi.
-            */}
-            
           </BrowserRouter>
           
         </TooltipProvider>

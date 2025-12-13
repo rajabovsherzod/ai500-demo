@@ -30,9 +30,7 @@ interface DeviceCardProps {
   };
   type: string;
   aiMode: boolean;
-  // O'ZGARISH: onToggle endi ixtiyoriy (optional) (?)
-  onToggle?: (newState: boolean) => void; 
-  onBrightnessChange?: (value: number) => void;
+  onToggle?: (newState: boolean) => void;
   onSpeedChange?: (value: number) => void;
 }
 
@@ -41,54 +39,48 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   type,
   aiMode,
   onToggle,
-  onBrightnessChange,
   onSpeedChange,
 }) => {
   const { t } = useTranslation();
   const Icon = iconMap[type] || WifiOff;
 
-  // Offline yoki Disabled holatlari
   const isOffline = !device;
-  // Agar AI rejimida bo'lsa yoki Device yo'q bo'lsa - bloklaymiz
   const isDisabled = isOffline || aiMode;
 
   const deviceName = t(deviceNameKeys[type] || "Unknown Device");
 
   // --- LOCAL STATE ---
-  const [isOn, setIsOn] = useState(device?.isOn || false);
-  const [brightness, setBrightness] = useState(device?.brightness || 0);
-  const [speed, setSpeed] = useState(device?.speed || 0);
+  const [isOn, setIsOn] = useState(false);
+  const [speed, setSpeed] = useState(0);
 
   // --- SYNC WITH SERVER ---
   useEffect(() => {
     if (device) {
       setIsOn(device.isOn);
-      if (device.brightness !== undefined) setBrightness(device.brightness);
-      if (device.speed !== undefined) setSpeed(device.speed);
+      if (device.speed !== undefined) {
+        setSpeed(device.speed);
+      }
     }
-  }, [device?.isOn, device?.brightness, device?.speed]);
+  }, [device]);
 
   // --- HANDLERS ---
-
-  // 1. Switch bosilganda
   const handleSwitch = (checked: boolean) => {
-    setIsOn(checked);    // 1. Vizual o'zgarish
-    // O'ZGARISH: Agar funksiya mavjud bo'lsa, uni chaqiramiz
+    setIsOn(checked); // Darhol vizual o'zgarish
     if (onToggle) {
-        onToggle(checked);
+        onToggle(checked); // API ga so'rov
     }
   };
 
-  // 2. Slider surilayotganda (Faqat vizual)
-  const handleSliderMove = (val: number[], mode: "brightness" | "speed") => {
-    if (mode === "brightness") setBrightness(val[0]);
-    if (mode === "speed") setSpeed(val[0]);
+  // Slider sudrab yurilganda (Faqat vizual o'zgaradi)
+  const handleSliderChange = (val: number[]) => {
+    setSpeed(val[0]);
   };
 
-  // 3. Slider qo'yib yuborilganda (API call)
-  const handleSliderCommit = (val: number[], mode: "brightness" | "speed") => {
-    if (mode === "brightness" && onBrightnessChange) onBrightnessChange(val[0]);
-    if (mode === "speed" && onSpeedChange) onSpeedChange(val[0]);
+  // Slider qo'yib yuborilganda (API ga ketadi)
+  const handleSliderCommit = (val: number[]) => {
+    if (onSpeedChange) {
+        onSpeedChange(val[0]);
+    }
   };
 
   return (
@@ -152,7 +144,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* O'ZGARISH: Power Toggle faqat onToggle prop bor bo'lsa ko'rinadi */}
+          {/* 1. POWER SWITCH (Hamma uchun, LED uchun ham) */}
           {onToggle && (
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{t("devices.power")}</span>
@@ -165,26 +157,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </div>
           )}
 
-          {/* Brightness Slider */}
-          {type === "led" && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>{t("devices.brightness")}</span>
-                <span className="text-primary font-mono">{brightness}%</span>
-              </div>
-              <Slider
-                value={[brightness]}
-                onValueChange={(val) => handleSliderMove(val, "brightness")}
-                onValueCommit={(val) => handleSliderCommit(val, "brightness")}
-                max={100}
-                step={1}
-                disabled={isDisabled} // isOn tekshiruvi olib tashlandi, chunki switch yo'q bo'lishi mumkin
-                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
-              />
-            </div>
-          )}
-
-          {/* Speed Slider */}
+          {/* 2. SPEED SLIDER (Faqat FAN uchun) */}
           {type === "fan" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -193,12 +166,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               </div>
               <Slider
                 value={[speed]}
-                onValueChange={(val) => handleSliderMove(val, "speed")}
-                onValueCommit={(val) => handleSliderCommit(val, "speed")}
+                onValueChange={handleSliderChange}
+                onValueCommit={handleSliderCommit}
                 max={100}
                 step={1}
                 disabled={isDisabled || !isOn}
-                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer"
+                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary cursor-pointer touch-none"
               />
             </div>
           )}

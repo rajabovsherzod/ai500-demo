@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "analyze": "AI Scan",
     "profile": "Profile",
     "login": "Login",
     "logout": "Logout",
@@ -146,6 +147,42 @@
     "inactive": "Inactive",
     "aiControlled": "AI Controlled",
     "manualMode": "Manual Mode"
+  },
+  "analyze": {
+    "title": "AI Plant Analysis",
+    "subtitle": "Upload a plant image and use AI to detect diseases, check health status, and get professional advice.",
+    "uploadTitle": "Click to upload image",
+    "uploadSubtitle": "or drag and drop image here",
+    "uploadFormat": "JPG, PNG (Max 5MB)",
+    "selectBtn": "Select Image",
+    "startBtn": "Start Analysis",
+    "analyzing": {
+      "text": "Analyzing image...",
+      "step1": "Examining leaf structure...",
+      "step2": "Searching for disease symptoms...",
+      "step3": "Comparing with AI database...",
+      "step4": "Preparing report...",
+      "success": "Analysis complete! 🌿"
+    },
+    "results": {
+      "identified": "IDENTIFIED PLANT",
+      "confidence": "Confidence",
+      "healthScore": "Health Score",
+      "healthStatus": {
+        "excellent": "Excellent",
+        "average": "Average",
+        "critical": "Critical"
+      },
+      "diagnosis": "Diagnosis",
+      "symptoms": "Symptoms",
+      "recommendations": "Recommendations & Treatment",
+      "newScan": "New Scan",
+      "saveReport": "Save Report",
+      "reportSaved": "Report saved!"
+    },
+    "error": {
+      "invalidFile": "Please upload an image file only (JPG, PNG)"
+    }
   },
   "plants": {
     "title": "Plants",
